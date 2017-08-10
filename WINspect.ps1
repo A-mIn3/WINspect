@@ -1,7 +1,7 @@
 ﻿                                     ############# WINspect ############# 
 
                                       #------ beta version
-                                      #------ Author : Amine MEHDAOUI
+                                      #------ Author : A-mIn3
 
     ################################################################################################################
     #      This script is part of a larger project for auditing different areas of Windows environments.           #
@@ -41,11 +41,11 @@ $permissionFlags = @{
                        		0x1         =     "Read-List";
                     		0x2         =     "Write-Create";
                     		0x4         =     "Append-Create Subdirectory";                  	
-                    	   0x20         =     "Execute file-Traverse directory";
+                    	       0x20         =     "Execute file-Traverse directory";
                 	       0x40         =     "Delete child"
-                        0x10000         =     "Delete";                     
-                        0x40000         =     "Write access to DACL";
-                        0x80000         =     "Write Onwer"
+                            0x10000         =     "Delete";                     
+                            0x40000         =     "Write access to DACL";
+                            0x80000         =     "Write Onwer"
 }
 
 
