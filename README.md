@@ -33,16 +33,15 @@ This current version of the script supports the following features :
 ## Contributions
 
 You are welcome to contribute and suggeste any improvements.
-If you want to point to an issue, Please [file an issue](https://github.com/ascott1/readme-template/issues).
+If you want to point to an issue, Please [file an issue](https://github.com/A-mIn3/WINspect/issues).
 
 ## Direct contributions
 
- For direct contributions:
-      Fork the repository && File a pull request && You are good to go ;)
+Fork the repository && File a pull request && You are good to go ;)
  
 ## Need Help
 
-If you have questions or need further guidance on using the tool , please [file an issue](https://github.com/ascott1/readme-template/issues). 
+If you have questions or need further guidance on using the tool , please [file an issue](https://github.com/A-mIn3/WINspect/issues). 
 
 ## License
 This project is licensed under The GPL terms.
