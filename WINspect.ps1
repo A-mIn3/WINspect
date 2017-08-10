@@ -1,15 +1,8 @@
-﻿                                     ############# WINspect ############# 
-
-                                      #------ beta version
-                                      #------ Author : A-mIn3
-
-    ################################################################################################################
-    #      This script is part of a larger project for auditing different areas of Windows environments.           #
-    #  It focuses on enumerating different parts of a Windows machine aiming to identify security weaknesses       #
-    #  and point to components that need further hardening. The main targets for the script are domain-joined      #
-    #  windows machines. Howerver, some of the functions can also be invoked for standalone workstations.          #
-    ################################################################################################################
-
+<#
+   WINspect 
+   -------- beta version
+   -------- Author : A-mIn3
+#>
 
 [Console]::ForegroundColor="White"
 [Console]::BackGroundColor="Black"
