@@ -31,21 +31,21 @@ $systemRoles = @{
 
 
 $permissionFlags = @{
-                       		0x1         =     "Read-List";
-                    		0x2         =     "Write-Create";
-                    		0x4         =     "Append-Create Subdirectory";                  	
-                    	       0x20         =     "Execute file-Traverse directory";
-                	       0x40         =     "Delete child"
-                            0x10000         =     "Delete";                     
-                            0x40000         =     "Write access to DACL";
-                            0x80000         =     "Write Onwer"
+                            0x1         =     "Read-List";
+                            0x2         =     "Write-Create";
+                    	    0x4         =     "Append-Create Subdirectory";                  	
+                    	   0x20         =     "Execute file-Traverse directory";
+                	   0x40         =     "Delete child"
+                        0x10000         =     "Delete";                     
+                        0x40000         =     "Write access to DACL";
+                        0x80000         =     "Write Onwer"
 }
 
 
 
 $aceTypes = @{ 
-                            0           =      "Allow";
-                            1           =      "Deny"
+                             0           =     "Allow";
+                             1           =     "Deny"
  }
 
 
@@ -137,23 +137,22 @@ function initialize-audit {
 
 function get-LocalSecurityProducts
 {
-
-       <#    
-           .SYNOPSIS		
-	       Gets Windows Firewall Profile status and checks for installed third party security products.
+      <#    
+       .SYNOPSIS		
+	   Gets Windows Firewall Profile status and checks for installed third party security products.
 			
-	   .DESCRIPTION
-               This function operates by examining registry keys specific to the Windows Firewall and by using the 
-             Windows Security Center to get information regarding installed security products. 
+       .DESCRIPTION
+           This function operates by examining registry keys specific to the Windows Firewall and by using the 
+        Windows Security Center to get information regarding installed security products. 
 	            
-           .NOTE
-               The documentation in the msdn is not very clear regarding the productState property provided by
-             the SecurityCenter2 namespace. For this reason, this function only uses available informations that were obtained by testing 
-             different security products againt the Windows API. 
+       .NOTE
+           The documentation in the msdn is not very clear regarding the productState property provided by
+        the SecurityCenter2 namespace. For this reason, this function only uses available informations that were obtained by testing 
+        different security products againt the Windows API. 
                             
-           .LINK
-                      http://neophob.com/2010/03/wmi-query-windows-securitycenter2
-       #>
+       .LINK
+           http://neophob.com/2010/03/wmi-query-windows-securitycenter2
+     #>
 
 
       $firewallPolicySubkey="HKLM:\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy"
@@ -165,44 +164,44 @@ function get-LocalSecurityProducts
       try{
       		if(Test-Path -Path $($firewallPolicySubkey+"\StandardProfile")){
               
-            		   $enabled = (Get-ItemProperty -Path $($firewallPolicySubkey+"\StandardProfile") -Name EnableFirewall).EnableFirewall  
+            		   $enabled = $(Get-ItemProperty -Path $($firewallPolicySubkey+"\StandardProfile") -Name EnableFirewall).EnableFirewall  
               
                            if($enabled -eq 1){$standardProfile="Enabled"}else{$standardProfile="Disabled"}
               
                                          "                   [*] Standard Profile  Firewall     :  {0}.`n" -f $standardProfile
                            }else{
                     
-                                         Write-Warning -Message "       [-] Could not find Standard Profile Registry Subkey.`n"
+                                         Write-Warning  "       [-] Could not find Standard Profile Registry Subkey.`n"
                            }    
-             
+               }  
                if(Test-Path -Path $($firewallPolicySubkey+"\PublicProfile")){
                    
-                           $enabled = (Get-ItemProperty -Path $($firewallPolicySubkey+"\PublicProfile") -Name EnableFirewall).EnableFirewall  
+                           $enabled = $(Get-ItemProperty -Path $($firewallPolicySubkey+"\PublicProfile") -Name EnableFirewall).EnableFirewall  
                            
                            if($enabled -eq 1){$publicProfile="Enabled"}else{$publicProfile="Disabled"}
                            
                            		 "                   [*] Public   Profile  Firewall     :  {0}.`n" -f $publicProfile
                            }else{
                            
-			                 Write-Warning -Message "       [-] Could not find Public Profile Registry Subkey.`n"
+			                 Write-Warning "       [-] Could not find Public Profile Registry Subkey.`n"
              
                            }
 
-                 
+               }  
                if(Test-Path -Path $($firewallPolicySubkey+"\DomainProfile")){
                      
                            $enabled = (Get-ItemProperty -Path $($firewallPolicySubkey+"\DomainProfile") -Name EnableFirewall).EnableFirewall  
               
-                           if($c -eq 1){$domainProfile="Enabled"}else{$domainProfile="Disabled"}
+                           if($enabled -eq 1){$domainProfile="Enabled"}else{$domainProfile="Disabled"}
               
                                          "                   [*] Domain   Profile  Firewall     :  {0}.`n`n" -f $domainProfile
                            }else{
                     
-                                          Write-Warning -Message "       [-] Could not find Private Profile Registry Subkey.`n`n"
+                                          Write-Warning  "       [-] Could not find Private Profile Registry Subkey.`n`n"
               
 	                   }              
                
-             
+               }
                sleep 2 
             
       }catch{
@@ -212,7 +211,7 @@ function get-LocalSecurityProducts
 
               "[-] Exception : "| Set-Content $exceptionsFilePath
               
-              '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+              "[*] Error Message : `n",$errorMessage | Set-Content $exceptionsFilePath
               
               "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
               
@@ -263,21 +262,21 @@ function get-LocalSecurityProducts
            
              if($firewalls.Count -eq 0){
            
-	  		        "       [-] No other firewall installed.`n"
-             }else {
+	            "       [-] No other firewall installed.`n"
+             }else{
              
                     "       [+] Found {0} third party firewall products.`n"  -f $($firewalls.Count); sleep 1     
             
                     Write-host "            [?] Checking for product configuration ...`n" -ForegroundColor black -BackgroundColor white ; sleep 1
             
-                    $firewalls|%{
+                    $firewalls| % {
                           
                           # The structure of the API is different depending on the version of the SecurityCenter Namespace
                           if($securityCenterNS.endswith("2")){
                                             
                                        [int]$productState=$_.ProductState
                           
-                        		       $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
+                        	       $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
                           	
                                        $provider=$hexString.substring(0,2)
                           
@@ -300,21 +299,7 @@ function get-LocalSecurityProducts
                     }
               
               }
-             
-         
-      
-         
-              $errorMessage = $_.Exception.Message
             
-              $failedItem   = $_.Exception.ItemName
-
-              "[-] Exception : "| Set-Content $exceptionsFilePath
-              
-              '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
-              
-              "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-                 
-          
               sleep 2
   
               # checks for antivirus products
@@ -366,7 +351,7 @@ function get-LocalSecurityProducts
 
               # Checks for antispyware products
 
-	          Write-host "`n[?] Checking for installed antispyware products ..`n"-ForegroundColor Black -BackgroundColor white ; sleep 2
+	      Write-host "`n[?] Checking for installed antispyware products ..`n"-ForegroundColor Black -BackgroundColor white ; sleep 2
             
               $antispyware=@(Get-WmiObject -Namespace $securityCenterNS -class AntiSpywareProduct)
          
@@ -379,8 +364,9 @@ function get-LocalSecurityProducts
 
                                 Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white ; sleep 2
           
-                                $antispyware|%{
-                		                if($securityCenterNS.endswith("2")){
+                                $antispyware| % {
+                		              
+					       if($securityCenterNS.endswith("2")){
                                             
                                                          [int]$productState=$_.ProductState
                                          
@@ -419,7 +405,7 @@ function get-LocalSecurityProducts
 
               "[-] Exception : "| Set-Content $exceptionsFilePath
               
-              '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+              "[*] Error Message : `n",$errorMessage | Set-Content $exceptionsFilePath
               
               "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
 
@@ -433,21 +419,21 @@ function get-LocalSecurityProducts
 function get-WorldExposedLocalShares
 {
       <#
-         .SYNOPSIS
-		    Gets informations about local shares and their associated DACLs.
+       .SYNOPSIS
+           Gets informations about local shares and their associated DACLs.
 
-	     .DESCRIPTION
-		    This function checks local file system shares and collects informations
-	     about each Access Control Entry (ACE) looking for those targeting the Everyone(Tout le monde) group.
+       .DESCRIPTION
+           This function checks local file system shares and collects informations about each 
+	Access Control Entry (ACE) looking for those targeting the Everyone(Tout le monde) group.
             
-         .NOTE
-	         This function can be modified in a way that for each share we
-         return its corresponding ace objects for further processing.
+       .NOTE
+	  This function can be modified in a way that for each share we
+        return its corresponding ace objects for further processing.
 
         .LINK
             https://msdn.microsoft.com/en-us/library/windows/desktop/aa374862(v=vs.85).aspx
 
-	#>
+      #>
 
     
         $exists = $false
@@ -547,22 +533,20 @@ function get-WorldExposedLocalShares
 $global:local_member = $false
 
 function check-LocalMembership
-
 {
-
-           <#
-                 .SYNOPSIS
-                      Gets domain users and groups with local group membership.
+     <#
+       .SYNOPSIS
+           Gets domain users and groups with local group membership.
                         
-                 .Description
-                      This function checks local groups on the machine for domain users/groups who are members in a local group.
-                   It uses ADSI with the WinNT and LDAP providers to access user and group objects.
+       .DESCRIPTION
+           This function checks local groups on the machine for domain users/groups who are members in a local group.
+        It uses ADSI with the WinNT and LDAP providers to access user and group objects.
                   
-                  .NOTE 
-                       The machine must be a domain member. This is needed in order to resolve 
-		       the identity references of domain members.
+       .NOTE 
+           The machine must be a domain member. This is needed in order to resolve 
+	the identity references of domain members.
             
-           #>
+     #>
            
            try{ 
            
@@ -604,54 +588,53 @@ function check-LocalMembership
 
 function check-GroupLocalMembership($group)
 {
+    <# 
+       .SYNOPSIS                                  
+            Given a specific  ADSI group object, it checks whether it is a local or domain 
+        group and looks fro its members.
 
-          <#
-	      .SYNOPSIS                                  
-                      Given a specific  ADSI group object, it checks whether it is a local or domain 
-                    group and looks fro its members.
-
-              .DESCRIPTION                           
-                       This function is used by the get-LocalMembership function for inspecting nested
-                    groups membership.
+       .DESCRIPTION                           
+            This function is used by the get-LocalMembership function for inspecting nested
+        groups membership.
                          
-          #>
+    #>
 
           $groupName=$group.GetType.Invoke().InvokeMember("Name","GetProperty", $null, $group, $null)
                       
           $GroupMembers = @($group.invoke("Members")) 
 	  
-	      $GroupMembers|% {                
+	  $GroupMembers|% {                
                        
 		       $adspath = $_.GetType.Invoke().InvokeMember("ADsPath", "GetProperty", $null, $_, $null)
                          
 		       $sidBytes = $_.GetType.Invoke().InvokeMember("ObjectSID", "GetProperty", $null, $_, $null)
            
-               $subjectName = (New-Object System.Security.Principal.SecurityIdentifier($sidBytes,0)).Translate([System.Security.Principal.NTAccount])
+              	       $subjectName = (New-Object System.Security.Principal.SecurityIdentifier($sidBytes,0)).Translate([System.Security.Principal.NTAccount])
 
-               if($_.GetType.Invoke().InvokeMember("class", "GetProperty", $null, $_, $null) -eq "group"){
+                       if($_.GetType.Invoke().InvokeMember("class", "GetProperty", $null, $_, $null) -eq "group"){
 
-                         # check if we have a local group object                                  
-                         if($adspath -match "/$env:COMPUTERNAME/") {
+                                   # check if we have a local group object                                  
+                                    if($adspath -match "/$env:COMPUTERNAME/") {
 
-                                        check-LocalGroupMembership $_
+                                                 check-LocalGroupMembership $_
 
-                          }else{
-                                        # It is a domain group, no further processing needed                                                                                    
-                                        Write-Host "          [+] Domain group ",$subjectName," is a member in the",$groupName,"local group.`n"
+                                    }else{
+                                                 # It is a domain group, no further processing needed                                                                                    
+                                                 Write-Host "          [+] Domain group ",$subjectName," is a member in the",$groupName,"local group.`n"
 
-                                        $global:local_member=$true
-                          }
+                                                 $global:local_member=$true
+                                    }
 
 
-               }else{
-                             # if not a group, then it must be a user
-                             if( !($adspath -match $env:COMPUTERNAME) ){
+                       }else{
+                                     # if not a group, then it must be a user
+                                    if( !($adspath -match $env:COMPUTERNAME) ){
 
-                                       Write-Host "          [+] Domain user  ",$subjectName,"is a member of the",$groupName,"local group.`n"
+                                                   Write-Host "          [+] Domain user  ",$subjectName,"is a member of the",$groupName,"local group.`n"
                                         
-                                      $global:local_member=$true                                             
-                              }
-               }
+                                                   $global:local_member=$true                                             
+                                     }
+                      }
 
           }
 
@@ -662,15 +645,15 @@ function check-GroupLocalMembership($group)
 
 function check-UACLevel{
 
-          <#
-              .SYNOPSIS
-                  Checks current configuration of User Account Control.
+        <#
+           .SYNOPSIS
+              Checks current configuration of User Account Control.
 
-              .Description
-                  This functions inspects registry informations related to UAC configuration 
-               and checks whether UAC is enabled and which level of operation is used.
+           .DESCRIPTION
+              This functions inspects registry informations related to UAC configuration 
+           and checks whether UAC is enabled and which level of operation is used.
 
-          #>
+       #>
         
           try{
                   
@@ -697,7 +680,7 @@ function check-UACLevel{
                             
                               "                          [*] UAC Level : Never Notify.`n`n"
           
-	              }elseif($consentPrompt -eq 5 -and $secureDesktop -eq 0){
+	          }elseif($consentPrompt -eq 5 -and $secureDesktop -eq 0){
                           
                               "                          [*] UAC Level : Notify only when apps try to make changes (No secure desktop).`n`n"
               
@@ -733,17 +716,17 @@ function check-UACLevel{
 
 function check-DLLHijackability{ 
 
-         <#
-             .SYNOPSIS
-                 Checks DLL Search mode and inspects permissions for directories in system %PATH%
-                 and checks write access for Authenticated Users group on these directories.
+      <#
+        .SYNOPSIS
+            Checks DLL Search mode and inspects permissions for directories in system %PATH%
+         and checks write access for Authenticated Users group on these directories.
             
-             .DESCRIPTION
-                  This functions tries to identify if DLL Safe Search is used and inspects 
-               write access to directories in the path environment variable .
-               It also looks for any DLLs loaded by running processes (#TODO)
+        .DESCRIPTION
+            This functions tries to identify if DLL Safe Search is used and inspects 
+         write access to directories in the path environment variable .
+         It also looks for any DLLs loaded by running processes (#TODO)
                
-         #>
+     #>
         
          Write-host "`n[?] Checking for DLL hijackability ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
 
@@ -829,22 +812,21 @@ function check-DLLHijackability{
 
 function get-BinaryWritableServices
 {
-      
-        param([switch]$display)
-        
-	   <#
-           .SYNOPSIS
-               Gets services whose binaries are writable by Authenticated Users group members.
+    param([switch]$display)
+       
+      <#
+        .SYNOPSIS
+           Gets services whose binaries are writable by Authenticated Users group members.
                     
-           .DESCRIPTION
-               This function checks services that have writable binaries and returns an array 
-             containing service objects.
+        .DESCRIPTION
+           This function checks services that have writable binaries and returns an array 
+         containing service objects.
                 
-           .RETURNS
-               When invoked without the $display switch, returns a hashtable of {name : pathname}
-             couples.
+        .RETURNS
+           When invoked without the $display switch, returns a hashtable of {name : pathname}
+        couples.
          
-        #>
+     #>
         
 
 
@@ -929,24 +911,24 @@ function get-BinaryWritableServices
 
 
 
-function get-UnquotedPathServices {
+function get-UnquotedPathServices
+{
+    param([switch]$display)
+   
+   <#
+    .SYNOPSIS
+        Looks for services with unquoted path vulnerability .
 
-     param([switch]$display)
-
-     <#
-        .SYNOPSIS
-            Looks for services with unquoted path vulnerability .
-
-        .DESCRIPTION
-            This function gets all non-system32 services with unquotted pathnames.
-          If display switch is used, it displays the name, state, start mode and pathname information            
-		  otherwise it returns a array of the vulnerable services.
+    .DESCRIPTION
+        This function gets all non-system32 services with unquotted pathnames.
+     If display switch is used, it displays the name, state, start mode and pathname information,            
+     otherwise it returns a array of the vulnerable services.
 	      
-	    .RETURNS
-            When invoked without the $display switch, returns a hashtable of {name: pathname}
-          couples.
+    .RETURNS
+       When invoked without the $display switch, returns a hashtable of {name: pathname}
+    couples.
      
-     #>
+   #>
 
      Write-Host "`n[?] Checking for unquoted path services ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
 
