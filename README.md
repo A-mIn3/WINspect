@@ -37,11 +37,8 @@ If you want to point to an issue, Please [file an issue](https://github.com/asco
 
 ## Direct contributions
 
- For direct contributions:</br>
-    
-     0.Fork the repository.</br>
-     1.File a pull request.</br>
-     2... You are good to go ;)</br>
+ For direct contributions:
+      Fork the repository && File a pull request && You are good to go ;)
  
 ## Need Help
 
