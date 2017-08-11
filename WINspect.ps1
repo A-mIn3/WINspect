@@ -1,7 +1,14 @@
-<#
-   WINspect 
-   -------- beta version
-   -------- Author : A-mIn3
+<# 
+                                           Spect
+   #              #      # # #     #       # # #
+    #            #        #       # #     #
+     #     #    #        #       #   #   #
+      #	 #  #  #        #       #     # #   
+     	#     #       # # #    #       # 
+	 
+ beta version
+ Author : A-mIn3
+
 #>
 
 [Console]::ForegroundColor="White"
@@ -86,13 +93,13 @@ function initialize-audit {
    
     if($PSVersion -lt 2){
        
-        Write-Warning  "[!] You have PowerShell v1.0.`n"
+            Write-Warning  "[!] You have PowerShell v1.0.`n"
         
-        Write-Warning  "[!] This script only supports Powershell verion 2 or above.`n"
+            Write-Warning  "[!] This script only supports Powershell verion 2 or above.`n"
         
-        read-host "Type any key to continue .."
+            read-host "Type any key to continue .."
         
-        exit  
+            exit  
     }
    
     write-host "       [+] ----->  PowerShell v$PSVersion`n" ; sleep 1
@@ -478,7 +485,7 @@ function get-WorldExposedLocalShares
 
                                                 $rule = New-Object  PSObject -Property @{
                                 
-                                                     "ShareName"    =  $shareName     
+                                                             "ShareName"    =  $shareName     
                            		                     "Trustee"      =  $ace.trustee.Name 
                          		                     "Permissions"  =  $permissions
                                                 }
@@ -643,8 +650,8 @@ function check-GroupLocalMembership($group)
 
 }
 
-function check-UACLevel{
-
+function check-UACLevel
+{
         <#
            .SYNOPSIS
               Checks current configuration of User Account Control.
