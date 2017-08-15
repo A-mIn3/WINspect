@@ -12,7 +12,7 @@
 
 This current version of the script supports the following features :
 
-- Checking installed security products .
+- Checking for installed security products.
 - Enumerating World Exposed local filesystem shares.
 - Enumerating domain users and groups with local group membership.
 - Enumerating registry autoruns.
