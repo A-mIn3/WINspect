@@ -169,48 +169,46 @@ function get-LocalSecurityProducts
       Write-host "       [?] Checking Firewall Profiles ..`n" -ForegroundColor black -BackgroundColor white ; sleep 2
       
       try{
-      		if(Test-Path -Path $($firewallPolicySubkey+"\StandardProfile")){
+      		
+		if(Test-Path -Path $($firewallPolicySubkey+"\StandardProfile")){
               
             		   $enabled = $(Get-ItemProperty -Path $($firewallPolicySubkey+"\StandardProfile") -Name EnableFirewall).EnableFirewall  
               
                            if($enabled -eq 1){$standardProfile="Enabled"}else{$standardProfile="Disabled"}
               
-                                         "                   [*] Standard Profile  Firewall     :  {0}.`n" -f $standardProfile
-                           }else{
+                           "                   [*] Standard Profile  Firewall     :  {0}.`n" -f $standardProfile
+                }else{
                     
                                          Write-Warning  "       [-] Could not find Standard Profile Registry Subkey.`n"
-                           }    
-               }  
-               if(Test-Path -Path $($firewallPolicySubkey+"\PublicProfile")){
+              
+	        }    
+                
+                if(Test-Path -Path $($firewallPolicySubkey+"\PublicProfile")){
                    
                            $enabled = $(Get-ItemProperty -Path $($firewallPolicySubkey+"\PublicProfile") -Name EnableFirewall).EnableFirewall  
                            
                            if($enabled -eq 1){$publicProfile="Enabled"}else{$publicProfile="Disabled"}
                            
-                           		 "                   [*] Public   Profile  Firewall     :  {0}.`n" -f $publicProfile
-                           }else{
-                           
-			                 Write-Warning "       [-] Could not find Public Profile Registry Subkey.`n"
+                           "                   [*] Public   Profile  Firewall     :  {0}.`n" -f $publicProfile
+                }else{         
+			   Write-Warning "       [-] Could not find Public Profile Registry Subkey.`n"
              
-                           }
+                }
 
-               }  
-               if(Test-Path -Path $($firewallPolicySubkey+"\DomainProfile")){
+                if(Test-Path -Path $($firewallPolicySubkey+"\DomainProfile")){
                      
                            $enabled = (Get-ItemProperty -Path $($firewallPolicySubkey+"\DomainProfile") -Name EnableFirewall).EnableFirewall  
               
                            if($enabled -eq 1){$domainProfile="Enabled"}else{$domainProfile="Disabled"}
               
-                                         "                   [*] Domain   Profile  Firewall     :  {0}.`n`n" -f $domainProfile
-                           }else{
-                    
-                                          Write-Warning  "       [-] Could not find Private Profile Registry Subkey.`n`n"
-              
-	                   }              
+                           "                   [*] Domain   Profile  Firewall     :  {0}.`n`n" -f $domainProfile
+                }else{       
+                          Write-Warning  "       [-] Could not find Private Profile Registry Subkey.`n`n"          
+	        }              
                
-               }
-               sleep 2 
+                sleep 2 
             
+     
       }catch{
               $errorMessage = $_.Exception.Message
             
