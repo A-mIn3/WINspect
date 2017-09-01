@@ -13,7 +13,7 @@
 This current version of the script supports the following features :
 
 - Checking for installed security products.
-- Enumerating World Exposed local filesystem shares.
+- Enumerating world-exposed local filesystem shares.
 - Enumerating domain users and groups with local group membership.
 - Enumerating registry autoruns.
 - Enumerating local services that are configurable by Authenticated Users group members.
@@ -22,7 +22,7 @@ This current version of the script supports the following features :
 - Enumerating local services with unquoted path vulnerability.
 - Enumerating non-system scheduled tasks.
 - Checking for DLL hijackability.
-- Checking for User Account Contol settings.
+- Checking for User Account Control settings.
 - Checking for unattended installs leftovers.
 
 ## Supported Powershell Version
