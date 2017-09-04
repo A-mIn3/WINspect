@@ -25,6 +25,13 @@ This current version of the script supports the following features :
 - Checking for User Account Control settings.
 - Checking for unattended installs leftovers.
 
+## TODO-LIST
+- Local Security Policy controls.
+- Administrative shares configs.
+- Loaded DLLs.
+- Established/listening connections.
+- Exposed GPO scripts.
+
 ## Supported Powershell Version
 
    This version was tested in a powershell v2.0 environment.
