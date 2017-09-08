@@ -74,7 +74,7 @@ function initialize-audit {
    
     sleep 2
 
-    Write-Host "[?] Checking for administrative privileges ..`n" -ForegroundColor black -BackgroundColor white  ; sleep 1
+    Write-Host "[?] Checking for administrative privileges ..`n" -ForegroundColor black -BackgroundColor white 
 
     $isAdmin = ([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
     
@@ -89,7 +89,7 @@ function initialize-audit {
             exit
     }
     
-    write-host "[?] Checking for Default PowerShell version ..`n" -ForegroundColor black -BackgroundColor white  ; sleep 1
+    write-host "[?] Checking for Default PowerShell version ..`n" -ForegroundColor black -BackgroundColor white 
    
     if($PSVersion -lt 2){
        
@@ -102,9 +102,9 @@ function initialize-audit {
             exit  
     }
    
-    write-host "       [+] ----->  PowerShell v$PSVersion`n" ; sleep 1
+    write-host "       [+] ----->  PowerShell v$PSVersion`n" 
   
-    write-host "[?] Detecting system role ..`n" -ForegroundColor black -BackgroundColor white ; sleep 1
+    write-host "[?] Detecting system role ..`n" -ForegroundColor black -BackgroundColor white 
   
     $systemRoleID = $(get-wmiObject -Class Win32_ComputerSystem).DomainRole
     
@@ -117,7 +117,7 @@ function initialize-audit {
             exit    
     }
     
-    write-host "       [+] ----->",$systemRoles[[int]$systemRoleID],"`n" ; sleep 1
+    write-host "       [+] ----->",$systemRoles[[int]$systemRoleID],"`n" 
    
     
     get-LocalSecurityProducts
@@ -135,7 +135,7 @@ function initialize-audit {
     
     $fin = get-date
     
-    "`n[!]Done`n"; sleep 1
+    "`n[!]Done`n"
     
     "Audit completed in {0} seconds. `n" -f $(New-TimeSpan -Start $start -End $fin ).TotalSeconds
     
@@ -164,9 +164,9 @@ function get-LocalSecurityProducts
 
       $firewallPolicySubkey="HKLM:\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy"
                
-      Write-host "`n[?] Checking if Windows Firewall is enabled ..`n"     -ForegroundColor black -BackgroundColor white ; sleep 2
+      Write-host "`n[?] Checking if Windows Firewall is enabled ..`n"     -ForegroundColor black -BackgroundColor white 
               
-      Write-host "       [?] Checking Firewall Profiles ..`n" -ForegroundColor black -BackgroundColor white ; sleep 2
+      Write-host "       [?] Checking Firewall Profiles ..`n" -ForegroundColor black -BackgroundColor white 
       
       try{
       		
@@ -206,7 +206,7 @@ function get-LocalSecurityProducts
                           Write-Warning  "       [-] Could not find Private Profile Registry Subkey.`n`n"          
 	        }              
                
-                sleep 2 
+                 
             
      
       }catch{
@@ -258,7 +258,7 @@ function get-LocalSecurityProducts
               
       # checks for third party firewall products 
  
-      Write-host "`n[?] Checking for third party Firewall products .. `n" -ForegroundColor Black -BackgroundColor White; sleep 1
+      Write-host "`n[?] Checking for third party Firewall products .. `n" -ForegroundColor Black -BackgroundColor White
               
       
       try {  
@@ -270,9 +270,9 @@ function get-LocalSecurityProducts
 	            "       [-] No other firewall installed.`n"
              }else{
              
-                    "       [+] Found {0} third party firewall products.`n"  -f $($firewalls.Count); sleep 1     
+                    "       [+] Found {0} third party firewall products.`n"  -f $($firewalls.Count)    
             
-                    Write-host "            [?] Checking for product configuration ...`n" -ForegroundColor black -BackgroundColor white ; sleep 1
+                    Write-host "            [?] Checking for product configuration ...`n" -ForegroundColor black -BackgroundColor white 
             
                     $firewalls| % {
                           
@@ -309,18 +309,18 @@ function get-LocalSecurityProducts
   
               # checks for antivirus products
 
-              Write-host "`n[?] Checking for installed antivirus products .."-ForegroundColor Black -BackgroundColor white ;""; sleep 2
+              Write-host "`n[?] Checking for installed antivirus products ..`n"-ForegroundColor Black -BackgroundColor white 
 
               $antivirus=@(Get-WmiObject -Namespace $securityCenterNS -class AntiVirusProduct)
               
               if($antivirus.Count -eq 0){
                 
-                                "       [-] No antivirus product installed.`n`n"; sleep 1       
+                                "       [-] No antivirus product installed.`n`n"      
               
               }else{
-                                "       [+] Found {0} AntiVirus solutions.`n" -f $($antivirus.Count); sleep 1
+                                "       [+] Found {0} AntiVirus solutions.`n" -f $($antivirus.Count)
               
-                                Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white ; sleep 2
+                                Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white 
               
              			$antivirus|%{
                                                 if($securityCenterNS.endswith("2")){
@@ -356,18 +356,18 @@ function get-LocalSecurityProducts
 
               # Checks for antispyware products
 
-	      Write-host "`n[?] Checking for installed antispyware products ..`n"-ForegroundColor Black -BackgroundColor white ; sleep 2
+	      Write-host "`n[?] Checking for installed antispyware products ..`n"-ForegroundColor Black -BackgroundColor white 
             
               $antispyware=@(Get-WmiObject -Namespace $securityCenterNS -class AntiSpywareProduct)
          
               if($antispyware.Count -eq 0){
           
-                                "       [-] No antiSpyware product installed.`n`n"; sleep 1       
+                                "       [-] No antiSpyware product installed.`n`n"     
          
               }else{
-                                "       [+] Found {0} antiSpyware solutions.`n" -f $($antiSpyware.Count); sleep 1
+                                "       [+] Found {0} antiSpyware solutions.`n" -f $($antiSpyware.Count)
 
-                                Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white ; sleep 2
+                                Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white 
           
                                 $antispyware| % {
                 		              
@@ -445,7 +445,7 @@ function get-WorldExposedLocalShares
    
         $rules=@()
 
-        Write-Host "`n[?] Checking for World-exposed local shares ..`n" -ForegroundColor black -BackgroundColor White ; sleep 2
+        Write-Host "`n[?] Checking for World-exposed local shares ..`n" -ForegroundColor black -BackgroundColor White 
 
         try{
 		  
@@ -555,7 +555,7 @@ function check-LocalMembership
            
            try{ 
            
-                   write-host "`n[?] Checking for domain users with local group membership ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+                   write-host "`n[?] Checking for domain users with local group membership ..`n" -ForegroundColor Black -BackgroundColor White 
 
                    $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 
@@ -662,7 +662,7 @@ function check-UACLevel
         
           try{
                   
-                  Write-Host "`n[?] Checking for UAC configuration ..`n" -ForegroundColor Black -BackgroundColor White; sleep 2
+                  Write-Host "`n[?] Checking for UAC configuration ..`n" -ForegroundColor Black -BackgroundColor White
          
                   $UACRegValues = Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
               
@@ -675,7 +675,7 @@ function check-UACLevel
                
                   }
                              
-                  Write-Host "            [?]Checking for UAC level ..`n" -ForegroundColor black -BackgroundColor white ; sleep 2
+                  Write-Host "            [?]Checking for UAC level ..`n" -ForegroundColor black -BackgroundColor white 
   
                   $consentPrompt=$UACregValues.ConsentPromptBehaviorAdmin
               
@@ -698,7 +698,7 @@ function check-UACLevel
                               "                          [*] UAC Level : Always Notify with secure desktop.`n`n"
                   }
 
-                  sleep 2
+                  
          
          }catch{
          
@@ -733,9 +733,9 @@ function check-DLLHijackability{
                
      #>
         
-         Write-host "`n[?] Checking for DLL hijackability ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+         Write-host "`n[?] Checking for DLL hijackability ..`n" -ForegroundColor Black -BackgroundColor White 
 
-         Write-host "       [?] Checking for Safe DLL Search mode ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+         Write-host "       [?] Checking for Safe DLL Search mode ..`n" -ForegroundColor Black -BackgroundColor White 
        
          try{
          
@@ -743,13 +743,13 @@ function check-DLLHijackability{
                    
                 if($value -and ($value.SafeDllSearchMode -eq 0)){
         
-	                        "                [+] DLL Safe Search is disabled !`n"      
+	                    "                [+] DLL Safe Search is disabled !`n"      
                 }else{
                    
                             "                [+] DLL Safe Search is enabled !`n"        
                 }
 
-                Write-Host "       [?] Checking directories in PATH environment variable ..`n" -ForegroundColor black -BackgroundColor white; sleep 1
+                Write-Host "       [?] Checking directories in PATH environment variable ..`n" -ForegroundColor black -BackgroundColor white
            
                 $systemPath = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).PATH
            
@@ -840,7 +840,7 @@ function get-BinaryWritableServices
          # Services to be ignored are those in system32 subtree
          $services = Get-WmiObject -Class Win32_Service|?{$_.pathname -ne $null -and $_.pathname -notmatch ".*system32.*"}
          
-         Write-Host "`n[?] Checking for binary-writable services ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+         Write-Host "`n[?] Checking for binary-writable services ..`n" -ForegroundColor Black -BackgroundColor White
          
          try{
      
@@ -935,7 +935,7 @@ function get-UnquotedPathServices
      
    #>
 
-     Write-Host "`n[?] Checking for unquoted path services ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+     Write-Host "`n[?] Checking for unquoted path services ..`n" -ForegroundColor Black -BackgroundColor White 
 
      try{
       
@@ -1022,7 +1022,7 @@ function get-ConfigurableServices{
             
        $configurable=@{} 
             
-       Write-Host "`n[?] Checking for configurable services ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+       Write-Host "`n[?] Checking for configurable services ..`n" -ForegroundColor Black -BackgroundColor White 
      
        try{       
            
@@ -1127,7 +1127,7 @@ function check-HostedServices {
        
             $services = Get-WmiObject -Class Win32_service | ?{ $_.pathname -match "svchost\.exe" -and $(Test-Path $("HKLM:\SYSTEM\CurrentControlSet\Services\"+$_.Name+"\Parameters")) -eq $true}
         
-            Write-Host "`n[?] Checking hosted services (svchost.exe) ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1 
+            Write-Host "`n[?] Checking hosted services (svchost.exe) ..`n" -ForegroundColor Black -BackgroundColor White 
        
             if($services){
         
@@ -1236,7 +1236,7 @@ function check-autoruns {
          
          $exits=$false
 
-         Write-Host "`n[?] Checking registry keys for autoruns ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+         Write-Host "`n[?] Checking registry keys for autoruns ..`n" -ForegroundColor Black -BackgroundColor White 
 
          try{
          
@@ -1322,7 +1322,7 @@ function check-autoruns {
 
         )
 
-        Write-Host "[?] Checking for unattended install leftovers ..`n" -ForegroundColor Black -BackgroundColor White ; sleep 1
+        Write-Host "[?] Checking for unattended install leftovers ..`n" -ForegroundColor Black -BackgroundColor White 
 
         try{
        
@@ -1380,7 +1380,7 @@ function check-scheduledTasks {
         
          $found=$false
 
-         Write-Host "[?] Checking scheduled tasks.." -ForegroundColor Black -BackgroundColor white; sleep 1
+         Write-Host "[?] Checking scheduled tasks.." -ForegroundColor Black -BackgroundColor white
          
          try{
                  [xml]$tasksXMLobj = $(schtasks.exe /query /xml ONE)
