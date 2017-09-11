@@ -12,141 +12,137 @@
 #>
 
 [Console]::ForegroundColor="White"
-[Console]::BackGroundColor="Black"
+[Console]::BackgroundColor="Black"
 
-[System.String]$scriptDirectoryPath  = split-path -parent $MyInvocation.MyCommand.Definition
-[System.String]$secpolFilePath       = join-path $scriptDirectoryPath "secedit.log"
-[System.String]$reportFilePath       = join-path $scriptDirectoryPath "report-$env:COMPUTERNAME.txt"
-[System.String]$exceptionsFilePath   = join-path $scriptDirectoryPath "exceptions-$env:COMPUTERNAME.txt"
+[System.String]$ScriptDirectoryPath  = Split-Path -Parent $MyInvocation.MyCommand.Definition
+[System.String]$SecpolFilePath       = Join-Path $ScriptDirectoryPath "secedit.log"
+[System.String]$ReportFilePath       = Join-Path $ScriptDirectoryPath "report-$env:COMPUTERNAME.txt"
+[System.String]$ExceptionsFilePath   = Join-Path $ScriptDirectoryPath "exceptions-$env:COMPUTERNAME.txt"
 
-[System.String]$culture=(Get-Culture).Name
+[System.String]$Culture=(Get-Culture).Name
 
 $PSVersion=$PSVersionTable.PSVersion.Major
 
-[int]$systemRoleID = $(get-wmiObject -Class Win32_ComputerSystem).DomainRole
+[Int]$SystemRoleID = $(Get-WmiObject -Class Win32_ComputerSystem).DomainRole
 
 
 
-$systemRoles = @{
-                              0         =    " Standalone Workstation    " ;
-                              1         =    " Member Workstation        " ;
-                              2         =    " Standalone Server         " ;
-                              3         =    " Member Server             " ;
-                              4         =    " Backup  Domain Controller " ;
-                              5         =    " Primary Domain Controller "       
+$SystemRoles = @{
+    0         =    " Standalone Workstation    " ;
+    1         =    " Member Workstation        " ;
+    2         =    " Standalone Server         " ;
+    3         =    " Member Server             " ;
+    4         =    " Backup  Domain Controller " ;
+    5         =    " Primary Domain Controller "       
 }
 
 
-$permissionFlags = @{
-                            0x1         =     "Read-List";
-                            0x2         =     "Write-Create";
-                    	    0x4         =     "Append-Create Subdirectory";                  	
-                    	   0x20         =     "Execute file-Traverse directory";
-                	   0x40         =     "Delete child"
-                        0x10000         =     "Delete";                     
-                        0x40000         =     "Write access to DACL";
-                        0x80000         =     "Write Onwer"
+$PermissionFlags = @{
+    0x1         =     "Read-List";
+    0x2         =     "Write-Create";
+    0x4         =     "Append-Create Subdirectory";                  	
+    0x20         =     "Execute file-Traverse directory";
+    0x40         =     "Delete child"
+    0x10000         =     "Delete";                     
+    0x40000         =     "Write access to DACL";
+    0x80000         =     "Write Onwer"
 }
 
 
 
-$aceTypes = @{ 
-                             0           =     "Allow";
-                             1           =     "Deny"
- }
+$AceTypes = @{ 
+    0           =     "Allow";
+    1           =     "Deny"
+}
 
 
-
-
-
-function initialize-audit {
+Function Initialize-Audit {
     
-    clear-host
+    Clear-Host
      
-    SecEdit.exe /export /cfg $secpolFilePath /quiet
+    SecEdit.exe /export /cfg $SecpolFilePath /quiet
      
-    $start = get-date 
+    $Start = Get-Date 
     
     sleep 1 
    
-    write-host "Starting Audit at", $start
+    Write-Host "Starting Audit at", $Start
     "-------------------------------------`n"
    
     sleep 2
 
-    Write-Host "[?] Checking for administrative privileges ..`n" -ForegroundColor black -BackgroundColor white 
+    Write-Host "[?] Checking for administrative privileges ..`n" -ForegroundColor Black -BackgroundColor White 
 
-    $isAdmin = ([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+    $IsAdmin = ([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
     
-    if(!$isAdmin){
+    If(!$IsAdmin){
             
-            Write-Warning  "[-] Some of the operations need administrative privileges.`n"
+        Write-Warning  "[-] Some of the operations need administrative privileges.`n"
             
-            Write-Warning  "[*] Please run the script using an administrative account.`n"
+        Write-Warning  "[*] Please run the script using an administrative account.`n"
             
-            Read-Host "Type any key to continue .."
+        Read-Host "Type any key to continue .."
 
-            exit
+        Exit
     }
     
-    write-host "[?] Checking for Default PowerShell version ..`n" -ForegroundColor black -BackgroundColor white 
+    Write-Host "[?] Checking for Default PowerShell version ..`n" -ForegroundColor Black -BackgroundColor White 
    
-    if($PSVersion -lt 2){
+    If($PSVersion -lt 2){
        
-            Write-Warning  "[!] You have PowerShell v1.0.`n"
+        Write-Warning  "[!] You have PowerShell v1.0.`n"
         
-            Write-Warning  "[!] This script only supports Powershell verion 2 or above.`n"
+        Write-Warning  "[!] This script only supports Powershell verion 2 or above.`n"
         
-            read-host "Type any key to continue .."
+        Read-Host "Type any key to continue .."
         
-            exit  
+        Exit  
     }
    
-    write-host "       [+] ----->  PowerShell v$PSVersion`n" 
+    Write-Host "       [+] ----->  PowerShell v$PSVersion`n" 
   
-    write-host "[?] Detecting system role ..`n" -ForegroundColor black -BackgroundColor white 
+    Write-Host "[?] Detecting system role ..`n" -ForegroundColor Black -BackgroundColor White 
   
-    $systemRoleID = $(get-wmiObject -Class Win32_ComputerSystem).DomainRole
+    $SystemRoleID = $(Get-WmiObject -Class Win32_ComputerSystem).DomainRole
     
-    if($systemRoleID -ne 1){
+    If($SystemRoleID -ne 1){
     
-            "       [-] This script needs access to the domain. It can only be run on a domain member machine.`n"
+        "       [-] This script needs access to the domain. It can only be run on a domain member machine.`n"
            
-            Read-Host "Type any key to continue .."
+        Read-Host "Type any key to continue .."
             
-            exit    
+        Exit    
     }
     
-    write-host "       [+] ----->",$systemRoles[[int]$systemRoleID],"`n" 
+    Write-Host "       [+] ----->",$SystemRoles[[Int]$SystemRoleID],"`n" 
    
     
-    get-LocalSecurityProducts
-    get-WorldExposedLocalShares 
-    check-LocalMembership
-    check-UACLevel
-    check-autoruns
-    get-BinaryWritableServices 	   -display
-    get-ConfigurableServices   	   -display
-    get-UnquotedPathServices       -display
-    check-HostedServices           -display
-    check-DLLHijackability     
-    check-UnattendedInstallFiles
-    check-scheduledTasks
+    Get-LocalSecurityProducts
+    Get-WorldExposedLocalShares 
+    Check-LocalMembership
+    Check-UACLevel
+    Check-Autoruns
+    Get-BinaryWritableServices 	   -display
+    Get-ConfigurableServices   	   -display
+    Get-UnquotedPathServices       -display
+    Check-HostedServices           -display
+    Check-DLLHijackability     
+    Check-UnattendedInstallFiles
+    Check-ScheduledTasks
     
-    $fin = get-date
+    $Fin = Get-Date
     
     "`n[!]Done`n"
     
-    "Audit completed in {0} seconds. `n" -f $(New-TimeSpan -Start $start -End $fin ).TotalSeconds
+    "Audit completed in {0} seconds. `n" -f $(New-TimeSpan -Start $Start -End $Fin ).TotalSeconds
     
 }
 
 
-function get-LocalSecurityProducts
-{
+Function Get-LocalSecurityProducts {
       <#    
        .SYNOPSIS		
-	   Gets Windows Firewall Profile status and checks for installed third party security products.
+           Gets Windows Firewall Profile status and checks for installed third party security products.
 			
        .DESCRIPTION
            This function operates by examining registry keys specific to the Windows Firewall and by using the 
@@ -162,267 +158,299 @@ function get-LocalSecurityProducts
      #>
 
 
-      $firewallPolicySubkey="HKLM:\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy"
+      $FirewallPolicySubkey="HKLM:\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy"
                
-      Write-host "`n[?] Checking if Windows Firewall is enabled ..`n"     -ForegroundColor black -BackgroundColor white 
+      Write-Host "`n[?] Checking if Windows Firewall is enabled ..`n"     -ForegroundColor Black -BackgroundColor White 
               
-      Write-host "       [?] Checking Firewall Profiles ..`n" -ForegroundColor black -BackgroundColor white 
+      Write-Host "       [?] Checking Firewall Profiles ..`n" -ForegroundColor Black -BackgroundColor White 
       
-      try{
+    Try {
       		
-		if(Test-Path -Path $($firewallPolicySubkey+"\StandardProfile")){
+        If(Test-Path -Path $($FirewallPolicySubkey+"\StandardProfile")) {
               
-            		   $enabled = $(Get-ItemProperty -Path $($firewallPolicySubkey+"\StandardProfile") -Name EnableFirewall).EnableFirewall  
+            $Enabled = $(Get-ItemProperty -Path $($FirewallPolicySubkey+"\StandardProfile") -Name EnableFirewall).EnableFirewall  
               
-                           if($enabled -eq 1){$standardProfile="Enabled"}else{$standardProfile="Disabled"}
+            If($Enabled -eq 1) {
+
+                $StandardProfile="Enabled"
+
+            } Else {
+            
+                $StandardProfile="Disabled"
+
+            }
               
-                           "                   [*] Standard Profile  Firewall     :  {0}.`n" -f $standardProfile
-                }else{
+            "                   [*] Standard Profile  Firewall     :  {0}.`n" -f $StandardProfile
+
+            } Else{
                     
-                                         Write-Warning  "       [-] Could not find Standard Profile Registry Subkey.`n"
+                Write-Warning  "       [-] Could not find Standard Profile Registry Subkey.`n"
               
-	        }    
+            }    
                 
-                if(Test-Path -Path $($firewallPolicySubkey+"\PublicProfile")){
+            If(Test-Path -Path $($FirewallPolicySubkey+"\PublicProfile")) {
                    
-                           $enabled = $(Get-ItemProperty -Path $($firewallPolicySubkey+"\PublicProfile") -Name EnableFirewall).EnableFirewall  
+                $Enabled = $(Get-ItemProperty -Path $($FirewallPolicySubkey+"\PublicProfile") -Name EnableFirewall).EnableFirewall  
                            
-                           if($enabled -eq 1){$publicProfile="Enabled"}else{$publicProfile="Disabled"}
-                           
-                           "                   [*] Public   Profile  Firewall     :  {0}.`n" -f $publicProfile
-                }else{         
-			   Write-Warning "       [-] Could not find Public Profile Registry Subkey.`n"
-             
+                If($Enabled -eq 1) {
+
+                    $PublicProfile="Enabled"
+
+                } Else {
+                    
+                    $PublicProfile="Disabled"
+
                 }
+                                        
+                "                   [*] Public   Profile  Firewall     :  {0}.`n" -f $PublicProfile
 
-                if(Test-Path -Path $($firewallPolicySubkey+"\DomainProfile")){
+            } Else{      
+                   
+                Write-Warning "       [-] Could not find Public Profile Registry Subkey.`n"
+             
+            }
+
+            If(Test-Path -Path $($FirewallPolicySubkey+"\DomainProfile")) {
                      
-                           $enabled = (Get-ItemProperty -Path $($firewallPolicySubkey+"\DomainProfile") -Name EnableFirewall).EnableFirewall  
+                $Enabled = (Get-ItemProperty -Path $($FirewallPolicySubkey+"\DomainProfile") -Name EnableFirewall).EnableFirewall  
               
-                           if($enabled -eq 1){$domainProfile="Enabled"}else{$domainProfile="Disabled"}
-              
-                           "                   [*] Domain   Profile  Firewall     :  {0}.`n`n" -f $domainProfile
-                }else{       
-                          Write-Warning  "       [-] Could not find Private Profile Registry Subkey.`n`n"          
-	        }              
-               
-                 
-            
-     
-      }catch{
-              $errorMessage = $_.Exception.Message
-            
-              $failedItem   = $_.Exception.ItemName
+                If($Enabled -eq 1) {
 
-              "[-] Exception : "| Set-Content $exceptionsFilePath
+                    $DomainProfile="Enabled"
+
+                } Else {
+
+                    $DomainProfile="Disabled"
+
+                }
               
-              "[*] Error Message : `n",$errorMessage | Set-Content $exceptionsFilePath
+                "                   [*] Domain   Profile  Firewall     :  {0}.`n`n" -f $DomainProfile
+
+            } Else{
+                           
+                Write-Warning  "       [-] Could not find Private Profile Registry Subkey.`n`n"          
+            }              
+                 
+    } Catch {
+
+        $ErrorMessage = $_.Exception.Message
+            
+        $FailedItem = $_.Exception.ItemName
+
+        "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-              "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
+        "[*] Error Message : `n",$ErrorMessage | Set-Content $ExceptionsFilePath
               
-      	      Write-Warning -Message "[-] Error : Could not check Windows Firewall registry informations .`n`n"	
+        "[*] Failed Item   : `n",$FailedItem   | Set-Content $ExceptionsFilePath
+              
+        Write-Warning -Message "[-] Error : Could not check Windows Firewall registry informations .`n`n"	
+     
       }       
             
       
       $SecurityProvider=@{         
-                                "00"     =   "None";
-                                "01"     =   "Firewall";
-                                "02"     =   "AutoUpdate_Settings";
-                                "04"     =   "AntiVirus";           
-                                "08"     =   "AntiSpyware";
-                                "10"     =   "Internet_Settings";
-                                "20"     =   "User_Account_Control";
-                                "40"     =   "Service"
+            "00"     =   "None";
+            "01"     =   "Firewall";
+            "02"     =   "AutoUpdate_Settings";
+            "04"     =   "AntiVirus";           
+            "08"     =   "AntiSpyware";
+            "10"     =   "Internet_Settings";
+            "20"     =   "User_Account_Control";
+            "40"     =   "Service"
       }
                
                
       $RealTimeBehavior = @{                              
-                                "00"    =    "Off";
-                                "01"    =    "Expired";
-                                "10"    =    "ON";
-                                "11"    =    "Snoozed"
+            "00"    =    "Off";
+            "01"    =    "Expired";
+            "10"    =    "ON";
+            "11"    =    "Snoozed"
       }
                
      
       $DefinitionStatus = @{
-                                "00"     =     "Up-to-date";
-                                "10"     =     "Out-of-date"
-               
+            "00"     =     "Up-to-date";
+            "10"     =     "Out-of-date"
       }
                
-      $securityCenterNS="root\SecurityCenter"
+      $SecurityCenterNS="root\SecurityCenter"
              
       [System.Version]$OSVersion=(Get-WmiObject -class Win32_operatingsystem).Version
               
-      if($OSVersion -gt [System.Version]'6.0.0.0'){$SecurityCenterNS+="2"}
+      If($OSVersion -gt [System.Version]'6.0.0.0') {
+      
+            $SecurityCenterNS += "2"
+      
+      }
               
       # checks for third party firewall products 
  
-      Write-host "`n[?] Checking for third party Firewall products .. `n" -ForegroundColor Black -BackgroundColor White
+      Write-Host "`n[?] Checking for third party Firewall products .. `n" -ForegroundColor Black -BackgroundColor White
               
       
-      try {  
+      Try {  
             
-             $firewalls= @(Get-WmiObject -Namespace $securityCenterNS -class FirewallProduct)
+            $Firewalls= @(Get-WmiObject -Namespace $SecurityCenterNS -Class FirewallProduct)
            
-             if($firewalls.Count -eq 0){
+            If($Firewalls.Count -eq 0) {
            
-	            "       [-] No other firewall installed.`n"
-             }else{
+                  "       [-] No other firewall installed.`n"
+
+            } Else {
              
-                    "       [+] Found {0} third party firewall products.`n"  -f $($firewalls.Count)    
+                  "       [+] Found {0} third party firewall products.`n"  -f $($Firewalls.Count)    
             
-                    Write-host "            [?] Checking for product configuration ...`n" -ForegroundColor black -BackgroundColor white 
+                  Write-Host "            [?] Checking for product configuration ...`n" -ForegroundColor Black -BackgroundColor White 
             
-                    $firewalls| % {
+                  $Firewalls | Foreach-Object {
                           
-                          # The structure of the API is different depending on the version of the SecurityCenter Namespace
-                          if($securityCenterNS.endswith("2")){
+                        # The structure of the API is different depending on the version of the SecurityCenter Namespace
+                        If($SecurityCenterNS.Endswith("2")){
                                             
-                                       [int]$productState=$_.ProductState
+                              [Int]$ProductState = $_.ProductState
                           
-                        	       $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
+                              $HexString = [System.Convert]::toString($ProductState,16).Padleft(6,'0')
                           	
-                                       $provider=$hexString.substring(0,2)
+                              $Provider = $HexString.Substring(0,2)
                           
-                                       $realTimeProtec=$hexString.substring(2,2)
+                              $RealTimeProtec = $HexString.Substring(2,2)
                           
-                                       $definition=$hexString.substring(4,2)
+                              $Definition = $HexString.Substring(4,2)
                                          
-                                       "                     [+] Product Name          : {0}."     -f $_.displayName
-                                       "                     [+] Service Type          : {0}."     -f $SecurityProvider[[String]$provider]
-                                       "                     [+] State                 : {0}.`n`n" -f $RealTimeBehavior[[String]$realTimeProtec]
+                              "                     [+] Product Name          : {0}."     -f $_.displayName
+                              "                     [+] Service Type          : {0}."     -f $SecurityProvider[[String]$Provider]
+                              "                     [+] State                 : {0}.`n`n" -f $RealTimeBehavior[[String]$RealTimeProtec]
 
-                          }else{
+                        } Else {
                             
-                                       "                     [+] Company Name           : {0}."     -f $_.CompanyName
-                                       "                     [+] Product Name           : {0}."     -f $_.displayName
-                                       "                     [+] State                  : {0}.`n`n" -f $_.enabled
+                              "                     [+] Company Name           : {0}."     -f $_.CompanyName
+                              "                     [+] Product Name           : {0}."     -f $_.displayName
+                              "                     [+] State                  : {0}.`n`n" -f $_.enabled
 
-                          }
+                        }
 
-                    }
+                  }
               
-              }
+            }
             
-              sleep 2
+            sleep 2
   
-              # checks for antivirus products
+            # checks for antivirus products
 
-              Write-host "`n[?] Checking for installed antivirus products ..`n"-ForegroundColor Black -BackgroundColor white 
+            Write-Host "`n[?] Checking for installed antivirus products ..`n"-ForegroundColor Black -BackgroundColor White 
 
-              $antivirus=@(Get-WmiObject -Namespace $securityCenterNS -class AntiVirusProduct)
+            $Antivirus=@(Get-WmiObject -Namespace $SecurityCenterNS -Class AntiVirusProduct)
               
-              if($antivirus.Count -eq 0){
+            If($Antivirus.Count -eq 0) {
                 
-                                "       [-] No antivirus product installed.`n`n"      
+                  "       [-] No antivirus product installed.`n`n"      
               
-              }else{
-                                "       [+] Found {0} AntiVirus solutions.`n" -f $($antivirus.Count)
+            } Else {
+                  "       [+] Found {0} AntiVirus solutions.`n" -f $($Antivirus.Count)
               
-                                Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white 
+                  Write-Host "            [?] Checking for product configuration ..`n" -ForegroundColor Black -BackgroundColor White 
               
-             			$antivirus|%{
-                                                if($securityCenterNS.endswith("2")){
-                                            
-                                                	 [int]$productState=$_.ProductState
-                                       
-                                      			 $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
-                                       
-                                                         $provider=$hexString.substring(0,2)
-                                       
-                                                         $realTimeProtec=$hexString.substring(2,2)
-                                       
-                                                         $definition=$hexString.substring(4,2)
-                                         
-                                                         "                     [+] Product Name          : {0}."     -f $_.displayName
-                                                         "                     [+] Service Type          : {0}."     -f $SecurityProvider[[String]$provider]
-                                                         "                     [+] Real Time Protection  : {0}."     -f $RealTimeBehavior[[String]$realTimeProtec]
-                                                         "                     [+] Signature Definitions : {0}.`n`n" -f $DefinitionStatus[[String]$definition]
-                                                                     
-                                                }else{
-                            
-                                                         "                     [+] Company Name           : {0}."     -f $_.CompanyName
-                                                         "                     [+] Product Name           : {0}."     -f $_.displayName
-                                                         "                     [+] Real Time Protection   : {0}."     -f $_.onAccessScanningEnabled
-                                                         "                     [+] Product up-to-date     : {0}.`n`n" -f $_.productUpToDate
-                                                }
+                  $Antivirus | Foreach-Object {
 
-                                }
+                        If($SecurityCenterNS.Endswith("2")){
+                                            
+                              [Int]$ProductState = $_.ProductState
+                                       
+                              $HexString = [System.Convert]::toString($ProductState,16).Padleft(6,'0')
+                                       
+                              $Provider = $HexString.Substring(0,2)
+                                       
+                              $RealTimeProtec = $HexString.Substring(2,2)
+                                       
+                              $Definition = $HexString.Substring(4,2)
+             
+                              "                     [+] Product Name          : {0}."     -f $_.displayName
+                              "                     [+] Service Type          : {0}."     -f $SecurityProvider[[String]$Provider]
+                              "                     [+] Real Time Protection  : {0}."     -f $RealTimeBehavior[[String]$RealTimeProtec]
+                              "                     [+] Signature Definitions : {0}.`n`n" -f $DefinitionStatus[[String]$Definition]
+                                                                     
+                        } Else {
+                            
+                              "                     [+] Company Name           : {0}."     -f $_.CompanyName
+                              "                     [+] Product Name           : {0}."     -f $_.displayName
+                              "                     [+] Real Time Protection   : {0}."     -f $_.onAccessScanningEnabled
+                              "                     [+] Product up-to-date     : {0}.`n`n" -f $_.productUpToDate
+
+                        }
+
+                  }
                
                 
-              }
+            }
 
 
-              # Checks for antispyware products
+            # Checks for antispyware products
 
-	      Write-host "`n[?] Checking for installed antispyware products ..`n"-ForegroundColor Black -BackgroundColor white 
+            Write-Host "`n[?] Checking for installed antispyware products ..`n"-ForegroundColor Black -BackgroundColor White 
             
-              $antispyware=@(Get-WmiObject -Namespace $securityCenterNS -class AntiSpywareProduct)
+            $Antispyware = @(Get-WmiObject -Namespace $SecurityCenterNS -Class AntiSpywareProduct)
          
-              if($antispyware.Count -eq 0){
+            If($Antispyware.Count -eq 0) {
           
-                                "       [-] No antiSpyware product installed.`n`n"     
+                  "       [-] No antiSpyware product installed.`n`n"     
          
-              }else{
-                                "       [+] Found {0} antiSpyware solutions.`n" -f $($antiSpyware.Count)
+            } Else {
+                  
+                  "       [+] Found {0} antiSpyware solutions.`n" -f $($AntiSpyware.Count)
 
-                                Write-host "            [?] Checking for product configuration ..`n" -ForegroundColor black -BackgroundColor white 
+                  Write-Host "            [?] Checking for product configuration ..`n" -ForegroundColor Black -BackgroundColor White 
           
-                                $antispyware| % {
+                  $Antispyware | Foreach-Object {
                 		              
-					       if($securityCenterNS.endswith("2")){
+                        If($SecurityCenterNS.Endswith("2")) {
                                             
-                                                         [int]$productState=$_.ProductState
+                              [Int]$ProductState = $_.ProductState
                                          
-                                        		 $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
+                              $HexString = [System.Convert]::toString($ProductState,16).PadLeft(6,'0')
                                          
-                                                         $provider=$hexString.substring(0,2)
+                              $Provider = $HexString.Substring(0,2)
                                          
-                                                         $realTimeProtec=$hexString.substring(2,2)
+                              $RealTimeProtec = $HexString.Substring(2,2)
                                          
-                                                         $definition=$hexString.substring(4,2)
+                              $Definition = $HexString.Substring(4,2)
                                          
-                                         		 "                     [+] Product Name          : {0}."     -f $_.displayName
-                                         		 "                     [+] Service Type          : {0}."     -f $SecurityProvider[[String]$provider]
-                                         		 "                     [+] Real Time Protection  : {0}."     -f $RealTimeBehavior[[String]$realTimeProtec]
-                                         		 "                     [+] Signature Definitions : {0}.`n`n" -f $DefinitionStatus[[String]$definition]
+                              "                     [+] Product Name          : {0}."     -f $_.displayName
+                              "                     [+] Service Type          : {0}."     -f $SecurityProvider[[String]$Provider]
+                              "                     [+] Real Time Protection  : {0}."     -f $RealTimeBehavior[[String]$RealTimeProtec]
+                              "                     [+] Signature Definitions : {0}.`n`n" -f $DefinitionStatus[[String]$Definition]
                                          
-                               			}else{
+                        } Else {
                             
-                                         		 "                     [+] Company Name           : {0}."     -f $_.CompanyName
-                                         		 "                     [+] Product Name           : {0}."     -f $_.displayName
-                                         		 "                     [+] Real Time Protection   : {0}."     -f $_.onAccessScanningEnabled
-                                        		 "                     [+] Product up-to-date     : {0}.`n`n" -f $_.productUpToDate
+                              "                     [+] Company Name           : {0}."     -f $_.CompanyName
+                              "                     [+] Product Name           : {0}."     -f $_.displayName
+                              "                     [+] Real Time Protection   : {0}."     -f $_.onAccessScanningEnabled
+                              "                     [+] Product up-to-date     : {0}.`n`n" -f $_.productUpToDate
                             
-                                                }
+                        }
 
-                                }
+                  }
 
-              }
+            }
 
      
-      }catch{
+      } Catch {
               
-               $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-               $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-              "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-              "[*] Error Message : `n",$errorMessage | Set-Content $exceptionsFilePath
+            "[*] Error Message : `n",$ErrorMessage | Set-Content $ExceptionsFilePath
               
-              "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
+            "[*] Failed Item   : `n",$FailedItem   | Set-Content $ExceptionsFilePath
 
-              
-            
       }
 
 }
 
 
-function get-WorldExposedLocalShares
-{
+Function Get-WorldExposedLocalShares {
       <#
        .SYNOPSIS
            Gets informations about local shares and their associated DACLs.
@@ -432,113 +460,106 @@ function get-WorldExposedLocalShares
 	Access Control Entry (ACE) looking for those targeting the Everyone(Tout le monde) group.
             
        .NOTE
-	  This function can be modified in a way that for each share we
+           This function can be modified in a way that for each share we
         return its corresponding ace objects for further processing.
 
         .LINK
-            https://msdn.microsoft.com/en-us/library/windows/desktop/aa374862(v=vs.85).aspx
+           https://msdn.microsoft.com/en-us/library/windows/desktop/aa374862(v=vs.85).aspx
 
       #>
 
     
-        $exists = $false
+      $Exists = $False
    
-        $rules=@()
+      $Rules = @()
 
-        Write-Host "`n[?] Checking for World-exposed local shares ..`n" -ForegroundColor black -BackgroundColor White 
+      Write-Host "`n[?] Checking for World-exposed local shares ..`n" -ForegroundColor Black -BackgroundColor White 
 
-        try{
+      Try {
 		  
-                     Get-WmiObject -class Win32_share -Filter "type=0"|%{
+            Get-WmiObject -Class Win32_share -Filter "type=0" | Foreach-Object {
                   
-		    	     $rules=@()
+                $Rules = @()
                    
-                             $shareName = $_.Name
+                $ShareName = $_.Name
                  
-                             $shareSecurityObj = Get-WmiObject -class Win32_LogicalShareSecuritySetting -Filter "Name='$shareName'"
+                $ShareSecurityObj = Get-WmiObject -Class Win32_LogicalShareSecuritySetting -Filter "Name='$ShareName'"
                    
-                             $securityDescriptor = $shareSecurityObj.GetSecurityDescriptor().Descriptor
+                $securityDescriptor = $shareSecurityObj.GetSecurityDescriptor().Descriptor
  
-                             ForEach($ace in $securityDescriptor.dacl){
+                ForEach($Ace in $SecurityDescriptor.dacl){
  
-                                     # Looking for Everyone group (SID="S-1-1-0") permissions 
-                                     $trusteeSID = (New-Object System.Security.Principal.SecurityIdentifier($ace.trustee.SID, 0)).Value.ToString()
+                      # Looking for Everyone group (SID="S-1-1-0") permissions 
+                      $TrusteeSID = (New-Object System.Security.Principal.SecurityIdentifier($Ace.Trustee.SID, 0)).Value.ToString()
                             
                                      
-                                     if($trusteeSID -eq "S-1-1-0" -and $aceTypes[[int]$ace.aceType] -eq "Allow"){
+                      If($TrusteeSID -eq "S-1-1-0" -and $AceTypes[[Int]$Ace.aceType] -eq "Allow") {
 
-                                                $accessMask  = $ace.accessmask
+                            $AccessMask  = $Ace.Accessmask
                             
-                                                $permissions =""
+                            $Permissions = ""
                             
-                                                foreach($flag in $permissionFlags.Keys){
+                            Foreach($Flag in $PermissionFlags.Keys) {
 
-                                                       if($flag -band $accessMask){
+                                  If($Flag -band $AccessMask) {
                                           
-                                                                 $permissions+=$permissionFlags[$flag]
+                                        $Permissions += $PermissionFlags[$Flag]
                                           
-                                                                 $permissions+="$"
-                                                       }
-                                                }
+                                        $Permissions += "$"
+                                  }
 
-                                                $rule = New-Object  PSObject -Property @{
-                                
-                                                             "ShareName"    =  $shareName     
-                           		                     "Trustee"      =  $ace.trustee.Name 
-                         		                     "Permissions"  =  $permissions
-                                                }
+                            }
 
-                                                $rules+=$rule
+                            $Rule = New-Object PSObject -Property @{
+                                  "ShareName"    =  $ShareName     
+                                  "Trustee"      =  $Ace.Trustee.Name 
+                                  "Permissions"  =  $Permissions
+                            }
 
-                                                $exists=$true
+                            $Rules += $Rule
 
-                                     }
+                            $Exists = $True
+
+                      }
              
-                           }
+                }
 
-                           if($rules.Count -gt 0){
+                If($Rules.Count -gt 0) {
            
-                                     "[*]-----------------------------------------------------------------------------[*]"
+                      "[*]-----------------------------------------------------------------------------[*]"
                                
-                                      $rules| fl ShareName,Trustee,Permissions
+                      $Rules | Format-List ShareName, Trustee, Permissions
             
-                           }
+                }
 
-                    }
+          }
 
-                    if(!$exists){
+          If(!$Exists) {
         
-                         "       [-] No local World-exposed shares were found .`n`n"
-                    }
-      
+                "       [-] No local World-exposed shares were found .`n`n"
+          }
     
-    
-    
-        }catch{
+      } Catch {
                
-               $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-               $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-               "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-               "[*] Error Message : `n",$errorMessage | Set-Content $exceptionsFilePath
+            "[*] Error Message : `n",$ErrorMessage | Set-Content $ExceptionsFilePath
               
-               "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
               
-               "[-] Unable to inspect local shares. "
-        }
+            "[-] Unable to inspect local shares. "
+      }
 
 }
 
 
+$Global:local_member = $False
 
-
-
-$global:local_member = $false
-
-function check-LocalMembership
-{
+Function Check-LocalMembership {
      <#
        .SYNOPSIS
            Gets domain users and groups with local group membership.
@@ -553,46 +574,46 @@ function check-LocalMembership
             
      #>
            
-           try{ 
+      Try { 
            
-                   write-host "`n[?] Checking for domain users with local group membership ..`n" -ForegroundColor Black -BackgroundColor White 
+            Write-Host "`n[?] Checking for domain users with local group membership ..`n" -ForegroundColor Black -BackgroundColor White 
 
-                   $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
+            $Adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 
-                   $adsigroups= $adsi.Children|? {$_.SchemaClassName -eq "group"}
+            $Adsigroups = $Adsi.Children | Where-Object { $_.SchemaClassName -eq "group" }
 
-                   $adsigroups|%{
-	   			
-                              check-GroupLocalMembership $_
-                   }
+            $Adsigroups | Foreach-Object {
 
-                   if($global:local_member -eq $false){
-                    
-           	                  "       [-] Found no domain user or group with local group membership."
-                   }
+                  Check-GroupLocalMembership $_
             
-                   "`n`n"
+            }
+
+            If($Global:local_member -eq $False){
+
+                  "       [-] Found no domain user or group with local group membership."
+
+            }
+            
+            "`n`n"
    
-          }catch{
+      } Catch {
           
-                   $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-                   $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-                   "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-                   '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-                   "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
               
          
-          }
+      }
    
 }
 
-
-function check-GroupLocalMembership($group)
-{
+Function Check-GroupLocalMembership($Group) {
     <# 
        .SYNOPSIS                                  
             Given a specific  ADSI group object, it checks whether it is a local or domain 
@@ -604,52 +625,52 @@ function check-GroupLocalMembership($group)
                          
     #>
 
-          $groupName=$group.GetType.Invoke().InvokeMember("Name","GetProperty", $null, $group, $null)
+      $GroupName = $Group.GetType.Invoke().InvokeMember("Name","GetProperty", $Null, $Group, $Null)
                       
-          $GroupMembers = @($group.invoke("Members")) 
+      $GroupMembers = @($Group.Invoke("Members")) 
 	  
-	  $GroupMembers|% {                
+      $GroupMembers | Foreach-Object {                
                        
-		       $adspath = $_.GetType.Invoke().InvokeMember("ADsPath", "GetProperty", $null, $_, $null)
+            $AdsPath = $_.GetType.Invoke().InvokeMember("ADsPath", "GetProperty", $Null, $_, $Null)
                          
-		       $sidBytes = $_.GetType.Invoke().InvokeMember("ObjectSID", "GetProperty", $null, $_, $null)
+            $SidBytes = $_.GetType.Invoke().InvokeMember("ObjectSID", "GetProperty", $Null, $_, $Null)
            
-              	       $subjectName = (New-Object System.Security.Principal.SecurityIdentifier($sidBytes,0)).Translate([System.Security.Principal.NTAccount])
+            $SubjectName = (New-Object System.Security.Principal.SecurityIdentifier($SidBytes,0)).Translate([System.Security.Principal.NTAccount])
 
-                       if($_.GetType.Invoke().InvokeMember("class", "GetProperty", $null, $_, $null) -eq "group"){
+            If($_.GetType.Invoke().InvokeMember("class", "GetProperty", $Null, $_, $Null) -eq "group") {
 
-                                   # check if we have a local group object                                  
-                                    if($adspath -match "/$env:COMPUTERNAME/") {
+                  # check if we have a local group object                                  
+                  If($Adspath -match "/$env:COMPUTERNAME/") {
 
-                                                 check-LocalGroupMembership $_
+                        Check-LocalGroupMembership $_
 
-                                    }else{
-                                                 # It is a domain group, no further processing needed                                                                                    
-                                                 Write-Host "          [+] Domain group ",$subjectName," is a member in the",$groupName,"local group.`n"
+                  } Else {
+                        
+                        # It is a domain group, no further processing needed                                                                                    
+                        Write-Host "          [+] Domain group ",$SubjectName," is a member in the",$GroupName,"local group.`n"
 
-                                                 $global:local_member=$true
-                                    }
+                        $Global:local_member = $True
+                                  
+                  }
 
 
-                       }else{
-                                     # if not a group, then it must be a user
-                                    if( !($adspath -match $env:COMPUTERNAME) ){
+            } Else {
 
-                                                   Write-Host "          [+] Domain user  ",$subjectName,"is a member of the",$groupName,"local group.`n"
+                  # if not a group, then it must be a user
+                  If( !($AdsPath -match $env:COMPUTERNAME) ) {
+
+                  Write-Host "          [+] Domain user  ",$SubjectName,"is a member of the",$GroupName,"local group.`n"
                                         
-                                                   $global:local_member=$true                                             
-                                     }
-                      }
+                  $Global:local_member = $True
+                                                               
+                  }
+            }
 
-          }
-
- 
-
+      }
 
 }
 
-function check-UACLevel
-{
+Function Check-UACLevel {
         <#
            .SYNOPSIS
               Checks current configuration of User Account Control.
@@ -660,66 +681,63 @@ function check-UACLevel
 
        #>
         
-          try{
+      Try {
                   
-                  Write-Host "`n[?] Checking for UAC configuration ..`n" -ForegroundColor Black -BackgroundColor White
+            Write-Host "`n[?] Checking for UAC configuration ..`n" -ForegroundColor Black -BackgroundColor White
          
-                  $UACRegValues = Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+            $UACRegValues = Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
               
-                  if([int]$UACRegValues.EnableLUA -eq 1){
+            If([Int]$UACRegValues.EnableLUA -eq 1) {
              
-                               "          [+] UAC is enabled.`n"
-                  }else{
+                  "          [+] UAC is enabled.`n"
+
+            } Else {
                
-                               "          [-] UAC is disabled.`n"
-               
-                  }
+                  "          [-] UAC is disabled.`n"
+
+            }
                              
-                  Write-Host "            [?]Checking for UAC level ..`n" -ForegroundColor black -BackgroundColor white 
+            Write-Host "            [?]Checking for UAC level ..`n" -ForegroundColor Black -BackgroundColor White 
   
-                  $consentPrompt=$UACregValues.ConsentPromptBehaviorAdmin
+            $consentPrompt = $UACregValues.ConsentPromptBehaviorAdmin
               
-                  $secureDesktop=$UACregValues.PromptOnSecureDesktop
+            $secureDesktop = $UACregValues.PromptOnSecureDesktop
                
-                  if( $consentPrompt -eq 0 -and $secureDesktop -eq 0){
+            If( $consentPrompt -eq 0 -and $secureDesktop -eq 0) {
                             
-                              "                          [*] UAC Level : Never Notify.`n`n"
+                  "                          [*] UAC Level : Never Notify.`n`n"
           
-	          }elseif($consentPrompt -eq 5 -and $secureDesktop -eq 0){
+            } ElseIf($consentPrompt -eq 5 -and $secureDesktop -eq 0) {
                           
-                              "                          [*] UAC Level : Notify only when apps try to make changes (No secure desktop).`n`n"
+                  "                          [*] UAC Level : Notify only when apps try to make changes (No secure desktop).`n`n"
               
-                  }elseif($consentPrompt -eq 5 -and $secureDesktop -eq 1){
+            } ElseIf($consentPrompt -eq 5 -and $secureDesktop -eq 1) {
                           
-                              "                          [*] UAC Level : Notify only when apps try to make changes (secure desktop on).`n`n"
+                  "                          [*] UAC Level : Notify only when apps try to make changes (secure desktop on).`n`n"
               
-                  }elseif($consentPrompt -eq 5 -and $secureDesktop -eq 2){
+            } ElseIf($consentPrompt -eq 5 -and $secureDesktop -eq 2) {
                
-                              "                          [*] UAC Level : Always Notify with secure desktop.`n`n"
-                  }
-
-                  
+                  "                          [*] UAC Level : Always Notify with secure desktop.`n`n"
+            }
          
-         }catch{
+      } Catch {
          
-                 $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-                 $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-                 "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-                 '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-                 "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
+            "[*] Failed Item   : `n",$FailedItem   | Set-Content $ExceptionsFilePath
               
-         
-        }
-
+      }
 
 }
 
 
-function check-DLLHijackability{ 
+Function check-DLLHijackability{ 
 
       <#
         .SYNOPSIS
@@ -733,91 +751,93 @@ function check-DLLHijackability{
                
      #>
         
-         Write-host "`n[?] Checking for DLL hijackability ..`n" -ForegroundColor Black -BackgroundColor White 
+      Write-Host "`n[?] Checking for DLL hijackability ..`n" -ForegroundColor Black -BackgroundColor White 
 
-         Write-host "       [?] Checking for Safe DLL Search mode ..`n" -ForegroundColor Black -BackgroundColor White 
+      Write-Host "       [?] Checking for Safe DLL Search mode ..`n" -ForegroundColor Black -BackgroundColor White 
        
-         try{
+      Try {
          
-                $value = Get-ItemProperty 'HKLM:\SYSTEM\ControlSet001\Control\Session Manager\' -Name SafeDllSearchMode -ErrorAction SilentlyContinue
+            $Value = Get-ItemProperty 'HKLM:\SYSTEM\ControlSet001\Control\Session Manager\' -Name SafeDllSearchMode -ErrorAction SilentlyContinue
                    
-                if($value -and ($value.SafeDllSearchMode -eq 0)){
+            If($Value -and ($Value.SafeDllSearchMode -eq 0)) {
         
-	                    "                [+] DLL Safe Search is disabled !`n"      
-                }else{
-                   
-                            "                [+] DLL Safe Search is enabled !`n"        
-                }
-
-                Write-Host "       [?] Checking directories in PATH environment variable ..`n" -ForegroundColor black -BackgroundColor white
-           
-                $systemPath = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).PATH
-           
-                $systemPath.split(";")| %{
-  
-                                    $directory = $_
-                 
-                                    $writable=$false   
-
-                         # We are inspecting write access for the Authenticated Users group
-                 
-                                    $sid = "S-1-5-11"
-                           
-                                    $dirAcl = Get-Acl $($directory.trim('"'))            		
-
-                                    foreach($rule in $dirAcl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])){
-                 
-                                               if($rule.IdentityReference -eq $sid){
-                        
-                                                            $accessMask = $rule.FileSystemRights.value__
-
-                         # Here we are checking directory write access in UNIX sense (write/delete/modify permissions)
-                         # We use a combination of flags 
-                                   
-                                                            if($accessMask -BAND 0xd0046){
-                                    
-                                                                       $writable=$true
-                                                            }
-                                               }
-                                    }
-              
-                                    $item = New-Object psobject -Property @{
-                               
-                                               "Directory"   =  $directory        
-                                               "Writable"    =  $writable           
-                                
-                                    }
-
-                                    $item
-              
-         
-                }| ft Directory,Writable
-              
-                "`n`n"
-     
-        }catch{
-        
-              $errorMessage = $_.Exception.Message
+                  "                [+] DLL Safe Search is disabled !`n"      
             
-              $failedItem   = $_.Exception.ItemName
+            } Else {
+                   
+                  "                [+] DLL Safe Search is enabled !`n"        
+               
+            }
 
-              "[-] Exception : "| Set-Content $exceptionsFilePath
-              
-              '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
-              
-              "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-              
-        
-        
-        }
+            Write-Host "       [?] Checking directories in PATH environment variable ..`n" -ForegroundColor Black -BackgroundColor White
+           
+            $SystemPath = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).PATH
+           
+            $SystemPath.split(";") | Foreach-Object {
+  
+                  $Directory = $_
+                 
+                  $Writable = $False   
 
+                  # We are inspecting write access for the Authenticated Users group
+                 
+                  $Sid = "S-1-5-11"
+                           
+                  $DirAcl = Get-Acl $($Directory.Trim('"'))            		
+
+                  Foreach($Rule in $DirAcl.GetAccessRules($True, $True, [System.Security.Principal.SecurityIdentifier])) {
+                 
+                        If($Rule.IdentityReference -eq $Sid){
+                        
+                              $AccessMask = $Rule.FileSystemRights.value__
+
+                              # Here we are checking directory write access in UNIX sense (write/delete/modify permissions)
+                              # We use a combination of flags 
+                                   
+                              If($accessMask -BAND 0xd0046){
+                                    
+                                    $Writable = $True
+                              
+                              }
+
+                        }
+                          
+                  }
+              
+                  $item = New-Object psobject -Property @{
+                               
+                        "Directory" = $Directory        
+                        "Writable" = $Writable           
+                                
+                  }
+
+                  $item
+              
+            } | Format-Table Directory, Writable
+              
+            "`n`n"
+     
+      }Catch{
+        
+            $ErrorMessage = $_.Exception.Message
+            
+            $FailedItem = $_.Exception.ItemName
+
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
+              
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
+              
+            "[*] Failed Item   : `n",$FailedItem   | Set-Content $ExceptionsFilePath
+        
+      }
 
 }
 
+Function Get-BinaryWritableServices {
 
-function get-BinaryWritableServices
-{
-    param([switch]$display)
+      param(
+            [Switch]$Display
+      )
        
       <#
         .SYNOPSIS
@@ -835,90 +855,88 @@ function get-BinaryWritableServices
         
 
 
-         [array]$writableServices=@()
+      [Array]$WritableServices = @()
 
-         # Services to be ignored are those in system32 subtree
-         $services = Get-WmiObject -Class Win32_Service|?{$_.pathname -ne $null -and $_.pathname -notmatch ".*system32.*"}
+      # Services to be ignored are those in system32 subtree
+      $Services = Get-WmiObject -Class Win32_Service | Where-Object { $_.pathname -ne $Null -and $_.pathname -NotMatch ".*system32.*" }
          
-         Write-Host "`n[?] Checking for binary-writable services ..`n" -ForegroundColor Black -BackgroundColor White
+      Write-Host "`n[?] Checking for binary-writable services ..`n" -ForegroundColor Black -BackgroundColor White
          
-         try{
+      Try {
      
-                if($services){
+            If($Services) {
 	 	
-                         $services | % {
+                  $Services | Foreach-Object { 
 
-                                 # We are inspecting write access for Authenticated Users group members (SID = "S-1-5-11") 	
+                        # We are inspecting write access for Authenticated Users group members (SID = "S-1-5-11") 	
                 
-                                 $sid = "S-1-5-11"
+                        $Sid = "S-1-5-11"
                  
-                                 $pathname = $($_.pathname.subString(0, $_.pathname.toLower().IndexOf(".exe")+4)).trim('"')
+                        $Pathname = $($_.pathname.subString(0, $_.pathname.toLower().IndexOf(".exe")+4)).Trim('"')
                             
-                                 $binaryAcl = Get-Acl $pathname           		
+                        $BinaryAcl = Get-Acl $Pathname           		
 
-                                 foreach($rule in $binaryAcl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])){
+                        Foreach($Rule in $BinaryAcl.GetAccessRules($True, $True, [System.Security.Principal.SecurityIdentifier])){
                  
-                                          if($rule.IdentityReference -eq $sid){
+                              If($Rule.IdentityReference -eq $Sid) {
 
-                                                   $accessMask = $rule.FileSystemRights.value__
+                                    $accessMask = $rule.FileSystemRights.value__
                         
-                                                   if($accessMask -band 0xd0006){
+                                    If($accessMask -band 0xd0006){
                                     
-                                                             $writableServices+=$_
-                                                   }
-                                          }
-                                 }
+                                    $writableServices+=$_
+                              
+                                    }
+                        
+                              }
+                  
+                        }
                        
-                         }
+                  }
 
-                }
+            }
          
 
-                if($display){
+            If($Display) {
 
-                        if($writableServices.Count -gt 0){
+                  If($WritableServices.Count -gt 0) {
 
-                                 $writableServices|ft @{Expression={$_.name};Label="Name";width=12}, `
-                                                      @{Expression={$_.pathname};Label="Path"}
+                        $WritableServices | Format-Table @{Expression={$_.name};Label="Name";width=12}, `
+                                                         @{Expression={$_.pathname};Label="Path"}
                 
-                                                 
-                        }else{
+                  } Else {
 
-                                 "       [-] Found no binary-writable service."
-                        }
+                        "       [-] Found no binary-writable service."
+                  }
 
-                }else{
+            } Else {
 
-                        return $writableServices
+                  Return $WritableServices
 
-                }
+            }
         
-                "`n`n"
+            "`n`n"
 
-       
-        }catch{
+      } Catch {
         
-              $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-              $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-              "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-              '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-              "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-              
-        
-        }
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
+                      
+      }
       
-
 }
 
-
-
-function get-UnquotedPathServices
-{
-    param([switch]$display)
+Function Get-UnquotedPathServices {
+      Param(
+            [Switch]$Display
+      )
    
    <#
     .SYNOPSIS
@@ -935,72 +953,70 @@ function get-UnquotedPathServices
      
    #>
 
-     Write-Host "`n[?] Checking for unquoted path services ..`n" -ForegroundColor Black -BackgroundColor White 
+      Write-Host "`n[?] Checking for unquoted path services ..`n" -ForegroundColor Black -BackgroundColor White 
 
-     try{
+      Try {
       
-               [array]$services = Get-WmiObject -Class Win32_Service| ? {
+            [Array]$Services = Get-WmiObject -Class Win32_Service | Where-Object {
 
-                                         $_.pathname.trim() -ne "" -and
+                  $_.pathname.Trim() -ne "" -and
                                                     
-                                         $_.pathname.trim() -notmatch '^"' -and
+                  $_.pathname.Trim() -notmatch '^"' -and
                                                 
-                                         $_.pathname.subString(0, $_.pathname.IndexOf(".exe")+4) -match ".* .*"
+                  $_.pathname.subString(0, $_.pathname.IndexOf(".exe")+4) -match ".* .*"
 
-               }
+            }
 
 
-               if($display){
+            If($Display) {
 
-                         if($services.Count -gt 0){
+                  If($Services.Count -gt 0) {
                              
-                                 $services|ft  @{Expression={$_.name};Label="Name";width=12}, `
+                        $services | Format-Table @{Expression={$_.name};Label="Name";width=12}, `
                            
-                                               @{Expression={$_.state};Label="Sate";width=12}, `
+                                                 @{Expression={$_.state};Label="Sate";width=12}, `
                            
-                                                @{Expression={$_.StartMode};Label="Start Mode";width=12}, `
+                                                 @{Expression={$_.StartMode};Label="Start Mode";width=12}, `
                            
-                                                @{Expression={$_.pathname};Label="Path"} ;
+                                                 @{Expression={$_.pathname};Label="Path"} ;
                                
-                                 ""
-                         }else{
+                        ""
 
-                                 "          [-] Found no service with unquoted pathname."
-                         }
+                  } Else {
 
-                         "`n`n"
+                        "          [-] Found no service with unquoted pathname."
+                  
+                  }
+
+                  "`n`n"
        
-               }else{
+            } Else {
               
-                         return $services
+                  Return $Services
        
-               }
+            }
 
-
-      }catch{
+      }Catch{
            
-              $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-              $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-              "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-              '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-              "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-              
-               
-      
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
+                                 
       }
-
 
 }
 
+Function Get-ConfigurableServices {
 
-
-function get-ConfigurableServices{
-
-      param([Switch]$display)
+      Param(
+            [Switch]$Display
+      )
 
       <#
            .SYNOPSYS
@@ -1020,89 +1036,89 @@ function get-ConfigurableServices{
       #>
 
             
-       $configurable=@{} 
+      $Configurable = @{} 
             
-       Write-Host "`n[?] Checking for configurable services ..`n" -ForegroundColor Black -BackgroundColor White 
+      Write-Host "`n[?] Checking for configurable services ..`n" -ForegroundColor Black -BackgroundColor White 
      
-       try{       
+      Try {       
            
-                  Get-WmiObject -Class Win32_Service| ? { $_.pathname -notmatch ".*system32.*"}| % {
+            Get-WmiObject -Class Win32_Service | Where-Object { $_.pathname -notmatch ".*system32.*" } | Foreach-Object {
 
-                             # get the security descriptor of the service in SDDL format
+                  # get the security descriptor of the service in SDDL format
                   
-                             $sddl = [String]$(sc.exe sdshow $($_.Name))
+                  $Sddl = [String]$(sc.exe sdshow $($_.Name))
                   
-                             if($sddl -match "S:"){
+                  If($Sddl -match "S:") {
                        
-                                      $dacl = $sddl.substring(0,$sddl.IndexOf("S:"))
+                        $Dacl = $Sddl.SubString(0,$sddl.IndexOf("S:"))
                   
-                             }else{
+                  } Else {
                        
-                                      $dacl = $sddl          
+                        $Dacl = $Sddl          
                   
-                             }
+                  }
                 
-                             # We are interested in permissions related to Authenticated Users group which is assigned
-                             # a well known alias ("AU") in the security descriptor sddl string.
+                  # We are interested in permissions related to Authenticated Users group which is assigned
+                  # a well known alias ("AU") in the security descriptor sddl string.
         
-                             $permissions = [regex]::match($dacl, '\(A;;[A-Z]+;;;AU\)')
+                  $Permissions = [Regex]::match($Dacl, '\(A;;[A-Z]+;;;AU\)')
 
-                             if($permissions){
+                  If($Permissions) {
                   
-                                      if($permissions.value.split(';')[2] -match "CR|RP|WP|DT|DC|SD|WD|WO"){
+                        If($Permissions.Value.Split(';')[2] -match "CR|RP|WP|DT|DC|SD|WD|WO") {
 
-                                                 $configurable[$_.Name] = $($_.pathname.substring(0, $_.pathname.toLower().indexOf(".exe")+4)).trim('"')
+                              $Configurable[$_.Name] = $($_.PathName.SubString(0, $_.PathName.toLower().IndexOf(".exe")+4)).Trim('"')
  
-                                      }
-                             }
-            
-                  }
-
-                  if($display){
+                        }
                   
-                            if($configurable.Count -gt 0){
-
-                                    $configurable.GetEnumerator() | ft  @{Expression={$_.name};Label="Name"}, `
-                                                                        @{Expression={$_.value};Label="Path"} ;
-
-                            }else{
-                                   
-                                    "       [-] Found no configurable services."
-
-                            }
-
-                            "`n`n"
+                  }
             
-                  }else{
+            }
 
-                            return $configurable
+            If($Display) {
+                  
+                  If($Configurable.Count -gt 0) {
+
+                        $Configurable.GetEnumerator() | Format-Table @{Expression={$_.name};Label="Name"}, `
+                                                                     @{Expression={$_.value};Label="Path"} ;
+
+                  } Else {
+                                   
+                        "       [-] Found no configurable services."
 
                   }
+
+                  "`n`n"
+            
+            } Else {
+
+                  Return $Configurable
+
+            }
 
        
-       }catch{
+      } Catch {
        
                  
-                  $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-                  $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-                  "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-                  '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-                  "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-              
-       
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
+                    
        }
  
-
 }
        
-
-function check-HostedServices {
+Function Check-HostedServices {
   
-      param([Switch]$display)
+      Param(
+            [Switch]$display
+      )
       <#
           .SYNOPSIS
                Checks hosted services running DLLs not located in the system32 subtree.
@@ -1119,81 +1135,79 @@ function check-HostedServices {
      #>
        
        
-     $exits=$false
+      $Exits = $False
        
-     $svcs=@()
+      $Svcs = @()
      
-     try{   
+      Try {   
        
-            $services = Get-WmiObject -Class Win32_service | ?{ $_.pathname -match "svchost\.exe" -and $(Test-Path $("HKLM:\SYSTEM\CurrentControlSet\Services\"+$_.Name+"\Parameters")) -eq $true}
+            $Services = Get-WmiObject -Class Win32_service | Where-Object { $_.pathname -match "svchost\.exe" -and $(Test-Path $("HKLM:\SYSTEM\CurrentControlSet\Services\"+$_.Name+"\Parameters")) -eq $True }
         
             Write-Host "`n[?] Checking hosted services (svchost.exe) ..`n" -ForegroundColor Black -BackgroundColor White 
        
-            if($services){
+            If($Services) {
         
-                    foreach($service in $services){
+                  Foreach($Service in $Services) {
                 
-                            $serviceName  = $service.Name 
+                        $ServiceName  = $Service.Name 
               
-                            $serviceGroup = $service.pathname.split(" ")[2]
+                        $ServiceGroup = $Service.PathName.Split(" ")[2]
                    
-                            $serviceDLLPath=$(Get-ItemProperty $("HKLM:\SYSTEM\CurrentControlSet\Services\"+$service.Name+"\Parameters") -Name ServiceDLL).ServiceDLL
+                        $ServiceDLLPath=$(Get-ItemProperty $("HKLM:\SYSTEM\CurrentControlSet\Services\"+$service.Name+"\Parameters") -Name ServiceDLL).ServiceDLL
                         
-                            if($serviceDLLPath -ne $null -and $serviceDLLPath -notmatch ".*system32.*"){ 
+                        If($serviceDLLPath -ne $Null -and $serviceDLLPath -NotMatch ".*system32.*") { 
                               
-                                       $svcs+= New-Object psobject -Property @{
+                              $svcs += New-Object PSObject -Property @{
                             
-                                                      serviceName    = $serviceName
-                                                      serviceGroup   = $serviceGroup
-                                                      serviceDLLPath = $serviceDLLPath
+                                    serviceName    = $serviceName
+                                    serviceGroup   = $serviceGroup
+                                    serviceDLLPath = $serviceDLLPath
                         
-                                       }
+                              }
                        
-                                       $exits=$true
+                              $Exits = $True
                        
-                            }
+                        }
                
-                    }
+                  }
 
-            if($display){   
+            If($Display) {   
                          
-                    $svcs|ft *
-                         
-                    "`n`n"
-            }else{
-                    return $svcs
+                  $svcs | Format-Table *
+      
+                  "`n`n"
+
+            } Else {
+                  
+                  Return $svcs
                 
             }
                 
-        }
+      }
         
-        if(! $exits){
+      If(! $Exits) {
         
-                   "          [-] Found no user hosted services.`n"
+            "          [-] Found no user hosted services.`n"
                    
-        }
-
-   
-   
-   
-   }catch{
+      }
+     
+      } Catch {
              
-          $errorMessage = $_.Exception.Message
+      $ErrorMessage = $_.Exception.Message
             
-          $failedItem   = $_.Exception.ItemName
+      $FailedItem = $_.Exception.ItemName
 
-          "[-] Exception : "| Set-Content $exceptionsFilePath
+      "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-          '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+      '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-          "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
+      "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
                
    }
-
   
 }
 
-function check-autoruns {
+Function Check-Autoruns {
 
        <#
          .SYNOPSIS
@@ -1206,100 +1220,99 @@ function check-autoruns {
        #>
 
     
-         $RegistryKeys = @( 
-                            "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\BootExecute",
-                            "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Notify",
-                            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit",
-                            "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\\Shell",
-                            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\\Shell",
-                            "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad",
-                            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\",
-                            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce\",
-                            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\",
-                            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx\",
-                            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce\",
-                            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run\",
-                            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run\",
-                            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices\",
-                            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices",
-                            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServicesOnce",
-                            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServicesOnce",
-                            "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\load",
-                            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows",
-                            "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler",
-                            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows\AppInit_DLLs"   # DLLs specified in this entry can hijack any process that uses user32.dll 
+      $RegistryKeys = @( 
+
+            "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\BootExecute",
+            "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Notify",
+            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit",
+            "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\\Shell",
+            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\\Shell",
+            "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce\",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx\",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce\",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run\",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run\",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices\",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServices",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServicesOnce",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServicesOnce",
+            "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\load",
+            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows",
+            "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler",
+            "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows\AppInit_DLLs"   # DLLs specified in this entry can hijack any process that uses user32.dll 
                             
-                             # not sure if it is all we need to check!
-                     )
+            # not sure if it is all we need to check!
+      )
 
 
          
-         $exits=$false
+      $Exits = $False
 
-         Write-Host "`n[?] Checking registry keys for autoruns ..`n" -ForegroundColor Black -BackgroundColor White 
+      Write-Host "`n[?] Checking registry keys for autoruns ..`n" -ForegroundColor Black -BackgroundColor White 
 
-         try{
+      Try {
          
-                $RegistryKeys | %{
+            $RegistryKeys | Foreach-Object {
 
-                             $key = $_
+                  $Key = $_
 
-                             if(Test-Path -Path $key){
+                  If(Test-Path -Path $Key) {
 
-                                          $executables = @{}
+                        $Executables = @{}
 
-                                          [array]$properties = get-item $key | Select-Object -ExpandProperty Property
+                        [Array]$Properties = Get-Item $Key | Select-Object -ExpandProperty Property
 
-                                          if($properties.Count -gt 0){
+                        If($Properties.Count -gt 0) {
 
-                                                        "          [*] $key : "
+                              "          [*] $Key : "
 
-                                                        foreach($exe in $properties) {
+                              Foreach($Exe in $Properties) {
 
-                                                                  $executables[$exe]=$($($(Get-ItemProperty $key).$exe)).replace('"','')
+                                    $Executables[$Exe]=$($($(Get-ItemProperty $Key).$Exe)).Replace('"','')
 
-                                                        }
+                              }
 
-                                                        $executables | ft  @{Expression={$_.Name};Label="Executable"}, `
-                                                                       @{Expression={$_.Value};Label="Path"}
+                              $Executables | Format-Table @{Expression={$_.Name};Label="Executable"}, `
+                                                          @{Expression={$_.Value};Label="Path"}
 
-                                                        $exits=$true
-                                          }
-                             }
-                }
+                              $Exits = $True
+
+                        }
+
+                  }
+
+            }
 
 
+            If($Exits -eq $False){
 
-                if($exits -eq $false){
+                  "          [-] Found no autoruns ."
+             
+            }
 
-                          "          [-] Found no autoruns ."
-                }
-
-                "`n`n"
+            "`n`n"
       
-      }catch{
+      } Catch {
               
-               $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-               $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
 
-               "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-               '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-               "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-              
-      
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
       
       }
-
  
  }
  
  
- 
- 
- function check-UnattendedInstallFiles{
+ Function Check-UnattendedInstallFiles{
 
       <#  
 	     .SYNOPSIS
@@ -1311,57 +1324,54 @@ function check-autoruns {
   
       #>
 
-        $found = $false
+      $Found = $False
 
-        $targetFiles = @(
-                            "C:\unattended.xml",
-                            "C:\Windows\Panther\unattend.xml",
-                            "C:\Windows\Panther\Unattend\Unattend.xml",
-                            "C:\Windows\System32\sysprep.inf",
-                            "C:\Windows\System32\sysprep\sysprep.xml"
+      $TargetFiles = @(
+
+            "C:\unattended.xml",
+            "C:\Windows\Panther\unattend.xml",
+            "C:\Windows\Panther\Unattend\Unattend.xml",
+            "C:\Windows\System32\sysprep.inf",
+            "C:\Windows\System32\sysprep\sysprep.xml"
 
         )
 
-        Write-Host "[?] Checking for unattended install leftovers ..`n" -ForegroundColor Black -BackgroundColor White 
+      Write-Host "[?] Checking for unattended install leftovers ..`n" -ForegroundColor Black -BackgroundColor White 
 
-        try{
+      Try{
        
-                 $targetFiles | ? {$(Test-Path $_) -eq $true} | %{
+            $TargetFiles | Where-Object { $(Test-Path $_) -eq $True} | Foreach-Object {
 	           
-		                         $found=$true; "          [+] Found : $_"
+                  $Found = $True;
+                  "          [+] Found : $_"
             
-                 }
+            }
+              
+            If(!$Found) {
 
-        
-        
-	             if(!$found){
-
-                            "             [-] No unattended install files were found.`n"
-                 }
+                  "             [-] No unattended install files were found.`n"
+                
+            }
       
-                 "`n"
+            "`n"
 
-        }catch{
+      } Catch {
                     
-                 $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-                 $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
   
-                 "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-                 '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-                 "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
-              
-        
-       }
-
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath
+                     
+      }
 
 }
 
-
-
-function check-scheduledTasks {
+Function Check-ScheduledTasks {
 
        <#
 	     .SYNOPSIS
@@ -1371,69 +1381,66 @@ function check-scheduledTasks {
              This function looks for scheduled tasks invoking non-system executables.
 
          .NOTE
-             This functions uses the schtasks.exe utility to get informations about
+             This function uses the schtasks.exe utility to get informations about
           scheduled task and then tries to parse the results. Here I choose to parse XML output from the command.
           Another approach would be using the ScheduledTask Powershell module that was introduced starting from version 3.0 .
 
        #>
 
         
-         $found=$false
+      $Found=$False
 
-         Write-Host "[?] Checking scheduled tasks.." -ForegroundColor Black -BackgroundColor white
+      Write-Host "[?] Checking scheduled tasks.." -ForegroundColor Black -BackgroundColor White
          
-         try{
-                 [xml]$tasksXMLobj = $(schtasks.exe /query /xml ONE)
+      Try {
 
-                 $tasksXMLobj.Tasks.Task | %{
+            [XML]$TasksXMLObj = $(schtasks.exe /query /xml ONE)
 
-                          $taskCommandPath = [System.Environment]::ExpandEnvironmentVariables($_.actions.exec.command).trim()
+            $TasksXMLObj.Tasks.Task | Foreach-Object {
 
-                          if($taskCommandPath -ne $null -and $taskCommandPath -notmatch ".*system32.*"){
+                  $TaskCommandPath = [System.Environment]::ExpandEnvironmentVariables($_.actions.exec.command).Trim()
 
-                                   $sid = New-Object System.Security.Principal.SecurityIdentifier($_.Principals.Principal.UserID)
+                  If($TaskCommandPath -ne $Null -and $TaskCommandPath -NotMatch ".*system32.*") {
 
-                                   $taskSecurityContext = $sid.Translate([System.Security.Principal.NTAccount])
+                        $Sid = New-Object System.Security.Principal.SecurityIdentifier($_.Principals.Principal.UserID)
 
-                                   $task = New-Object psobject -Property @{
+                        $TaskSecurityContext = $Sid.Translate([System.Security.Principal.NTAccount])
 
-                                             TaskCommand = $taskCommandPath
+                        $Task = New-Object PSObject -Property @{
 
-                                             SecurityContext  = $taskSecurityContext
+                              TaskCommand = $TaskCommandPath
 
-                                   }
+                              SecurityContext  = $TaskSecurityContext
 
-                                   $found=$true
+                        }
 
-                                   $task
-                          }
+                        $Found = $True
 
-                 
-                 }| fl taskCommand,SecurityContext
+                        $Task
+      
+                  }
 
-                if($found -eq $false){
+            } | Format-List taskCommand, SecurityContext
 
-                          "         [-] No suspicious scheduled tasks were found.`n`n"
-                }
-
-         
-         }catch{            
+            If($Found -eq $False) {
+      
+                  "         [-] No suspicious scheduled tasks were found.`n`n"
+            }
+       
+      } Catch{            
                 
-                $errorMessage = $_.Exception.Message
+            $ErrorMessage = $_.Exception.Message
             
-                $failedItem   = $_.Exception.ItemName
+            $FailedItem = $_.Exception.ItemName
            
-                "[-] Exception : "| Set-Content $exceptionsFilePath
+            "[-] Exception : " | Set-Content $ExceptionsFilePath
               
-                '[*] Error Message : `n',$errorMessage | Set-Content $exceptionsFilePath
+            '[*] Error Message : `n',$ErrorMessage | Set-Content $ExceptionsFilePath
               
-                "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath    
+            "[*] Failed Item   : `n",$FailedItem | Set-Content $ExceptionsFilePath    
          
-        }
+      }
 
 }
 
-
-
- initialize-audit
-
+Initialize-Audit
