@@ -2,7 +2,7 @@
 
  <pre>  
        WINspect is part of a larger project for auditing different areas of Windows environments.         
-    It focuses on enumerating different parts of a Windows machine aiming to identify security weaknesses       
+    It focuses on enumerating different parts of a Windows machine to identify security weaknesses       
     and point to components that need further hardening. The main targets for the current version are 
     domain-joined windows machines. Howerver, some of the functions still apply for standalone workstations.
 
