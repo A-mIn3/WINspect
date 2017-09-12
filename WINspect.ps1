@@ -107,30 +107,34 @@ function initialize-audit {
     write-host "[?] Detecting system role ..`n" -ForegroundColor black -BackgroundColor white 
   
     $systemRoleID = $(get-wmiObject -Class Win32_ComputerSystem).DomainRole
-    
-    if($systemRoleID -ne 1){
-    
-            "       [-] This script needs access to the domain. It can only be run on a domain member machine.`n"
-           
-            Read-Host "Type any key to continue .."
-            
-            exit    
-    }
-    
+     
     write-host "       [+] ----->",$systemRoles[[int]$systemRoleID],"`n" 
    
     
     get-LocalSecurityProducts
+    
     get-WorldExposedLocalShares 
-    check-LocalMembership
+    
+    if($systemRoleID -eq 1){
+    	check-LocalMembership
+    }
+    
     check-UACLevel
+    
     check-autoruns
+    
     get-BinaryWritableServices 	   -display
+    
     get-ConfigurableServices   	   -display
+    
     get-UnquotedPathServices       -display
+    
     check-HostedServices           -display
+    
     check-DLLHijackability     
+    
     check-UnattendedInstallFiles
+    
     check-scheduledTasks
     
     $fin = get-date
