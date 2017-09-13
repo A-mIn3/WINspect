@@ -38,7 +38,7 @@ This current version of the script supports the following features :
 
 ## Contributions
 
-You are welcome to contribute and suggeste any improvements.
+You are welcome to contribute and suggest any improvements.
 If you want to point to an issue, Please [file an issue](https://github.com/A-mIn3/WINspect/issues).
 
 ## Direct contributions
