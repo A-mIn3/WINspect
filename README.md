@@ -47,7 +47,7 @@ Fork the repository && File a pull request && You are good to go ;)
  
 ## Need Help
 
-If you have questions or need further guidance on using the tool , please [file an issue](https://github.com/A-mIn3/WINspect/issues). 
+If you have questions or need further guidance on using the tool, please [file an issue](https://github.com/A-mIn3/WINspect/issues). 
 
 ## License
 This project is licensed under The GPL terms.
