@@ -12,6 +12,9 @@
 This current version of the script supports the following features :
 
 - Checking for installed security products.
+- Checking for DLL hijackability.
+- Checking for User Account Control settings.
+- Checking for unattended installs leftovers.
 - Enumerating world-exposed local filesystem shares.
 - Enumerating domain users and groups with local group membership.
 - Enumerating registry autoruns.
@@ -20,9 +23,6 @@ This current version of the script supports the following features :
 - Enumerating non-system32 Windows Hosted Services and their associated DLLs.
 - Enumerating local services with unquoted path vulnerability.
 - Enumerating non-system scheduled tasks.
-- Checking for DLL hijackability.
-- Checking for User Account Control settings.
-- Checking for unattended installs leftovers.
 
 ## TODO-LIST
 - Local Security Policy controls.
