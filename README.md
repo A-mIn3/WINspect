@@ -12,7 +12,7 @@
 This current version of the script supports the following features :
 
 - Checking for installed security products.
-- Checking for DLL hijackability.
+- Checking for DLL hijackability (Authenticated Users security context).
 - Checking for User Account Control settings.
 - Checking for unattended installs leftovers.
 - Enumerating world-exposed local filesystem shares.
