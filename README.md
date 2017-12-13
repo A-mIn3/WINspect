@@ -27,6 +27,7 @@ This current version of the script supports the following features :
 ## TODO-LIST
 - Local Security Policy controls.
 - Administrative shares configs.
+- COM objects.
 - Loaded DLLs.
 - Established/listening connections.
 - Exposed GPO scripts.
