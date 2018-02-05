@@ -825,7 +825,7 @@ function get-BinaryWritableServices
        
       <#
         .SYNOPSIS
-           Gets services whose binaries are writable by Authenticated Users group members.
+           Gets services whose binaries are writable by Authenticated Users and Everyone group members.
                     
         .DESCRIPTION
            This function checks services that have writable binaries and returns an array 
@@ -841,63 +841,70 @@ function get-BinaryWritableServices
 
          [array]$writableServices=@()
 
+         # We are inspecting write access for Authenticated Users group members (SID = "S-1-5-11") and Everyone (SID = "S-1-1-0")	
+         $sids = @("S-1-5-11", "S-1-1-0")
          # Services to be ignored are those in system32 subtree
          $services = Get-WmiObject -Class Win32_Service|?{$_.pathname -ne $null -and $_.pathname -notmatch ".*system32.*"}
          
          Write-Host "`n[?] Checking for binary-writable services ..`n" -ForegroundColor Black -BackgroundColor White
          
          try{
-     
-                if($services){
+ 
+         if($services){
 	 	
-                         $services | % {
+                  $services | % {
+		  
+                         $service = $_
 
-                                 # We are inspecting write access for Authenticated Users group members (SID = "S-1-5-11") 	
-                
-                                 $sid = "S-1-5-11"
-                 
-                                 $pathname = $($_.pathname.subString(0, $_.pathname.toLower().IndexOf(".exe")+4)).trim('"')
+                         $pathname = $($service.pathname.subString(0, $service.pathname.toLower().IndexOf(".exe")+4)).trim('"')
                             
-                                 $binaryAcl = Get-Acl $pathname           		
+                         $binaryAcl = Get-Acl $pathname  -ErrorAction SilentlyContinue  
+                                 
+                         if($binaryAcl){    		
 
-                                 foreach($rule in $binaryAcl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])){
-                 
-                                          if($rule.IdentityReference -eq $sid){
+                                   foreach($rule in $binaryAcl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])){
+                                        
+                                         $sids | %{
+                                                
+                                                 $sid  = $_
+                                                
+                                                 if($rule.IdentityReference -eq $sid){
 
-                                                   $accessMask = $rule.FileSystemRights.value__
+                                                         $accessMask = $rule.FileSystemRights.value__
                         
-                                                   if($accessMask -band 0xd0006){
+                                                                 if($accessMask -band 0xd0006){
                                     
-                                                             $writableServices+=$_
-                                                   }
-                                          }
-                                 }
-                       
+                                                                         $writableServices+=$service
+                                                                  }
+                                                 }
+                                         }
+                                   } 
+                                
                          }
-
-                }
          
+	          }
 
-                if($display){
+         }
 
-                        if($writableServices.Count -gt 0){
+         if($display){
 
-                                 $writableServices|ft @{Expression={$_.name};Label="Name";width=12}, `
+                 if($writableServices.Count -gt 0){
+
+                          $writableServices|ft @{Expression={$_.name};Label="Name";width=12}, `
                                                       @{Expression={$_.pathname};Label="Path"}
                 
-                                                 
-                        }else{
+                 }else{
 
                                  "       [-] Found no binary-writable service."
-                        }
+                 }
 
-                }else{
+         }else{
+ 
+                 return $writableServices
 
-                        return $writableServices
-
-                }
+         }
         
-                "`n`n"
+         "`n`n"
 
        
         }catch{
@@ -912,7 +919,6 @@ function get-BinaryWritableServices
               
               "[*] Failed Item   : `n",$failedItem   | Set-Content $exceptionsFilePath
               
-        
         }
       
 
@@ -1046,11 +1052,11 @@ function get-ConfigurableServices{
                   
                              }
                 
-                             # We are interested in permissions related to Authenticated Users group which is assigned
-                             # a well known alias ("AU") in the security descriptor sddl string.
+			     # We are interested in permissions related to Authenticated Users and Everyone group which are assigned
+                             # well known aliases ("AU", "WD" respectively) in the security descriptor sddl string.
         
-                             $permissions = [regex]::match($dacl, '\(A;;[A-Z]+;;;AU\)')
-
+                             $permissions = [regex]::match($dacl, '\(A;;[A-Z]+;;;(AU|WD)\)')
+		
                              if($permissions){
                   
                                       if($permissions.value.split(';')[2] -match "CR|RP|WP|DT|DC|SD|WD|WO"){
