@@ -1,7 +1,7 @@
-## Description
+## Description (INSACVL project)
 
  <pre>  
-       WINspect is part of a larger project for auditing different areas of Windows environments.         
+       WINspect is part of a larger academic project for auditing different areas of Windows environments.         
     It focuses on enumerating different parts of a Windows machine to identify security weaknesses       
     and point to components that need further hardening. 
 
