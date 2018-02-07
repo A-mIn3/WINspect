@@ -1,4 +1,4 @@
-## Description (INSACVL project)
+## Description
 
  <pre>  
        WINspect is part of a larger academic project for auditing different areas of Windows environments.         
