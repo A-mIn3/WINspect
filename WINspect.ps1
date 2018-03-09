@@ -145,7 +145,6 @@ function initialize-audit {
     
 }
 
-
 function get-LocalSecurityProducts
 {
       <#    
@@ -254,12 +253,20 @@ function get-LocalSecurityProducts
                
       }
                
-      $securityCenterNS="root\SecurityCenter"
-             
-      [System.Version]$OSVersion=(Get-WmiObject -class Win32_operatingsystem).Version
-              
-      if($OSVersion -gt [System.Version]'6.0.0.0'){$SecurityCenterNS+="2"}
-              
+      
+  
+      
+      if(Get-WmiObject -Namespace root -class __NAMESPACE -filter "name='SecurityCenter2'"){
+
+                 $securityCenterNS="root\SecurityCenter2"
+
+      }else{
+
+                 $securityCenterNS="root\SecurityCenter"
+      } 
+     
+      
+      
       # checks for third party firewall products 
  
       Write-host "`n[?] Checking for third party Firewall products .. `n" -ForegroundColor Black -BackgroundColor White
@@ -329,9 +336,9 @@ function get-LocalSecurityProducts
              			$antivirus|%{
                                                 if($securityCenterNS.endswith("2")){
                                             
-                                                	 [int]$productState=$_.ProductState
+                                                	[int]$productState=$_.ProductState
                                        
-                                      			 $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
+                                      		         $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
                                        
                                                          $provider=$hexString.substring(0,2)
                                        
@@ -375,11 +382,11 @@ function get-LocalSecurityProducts
           
                                 $antispyware| % {
                 		              
-					       if($securityCenterNS.endswith("2")){
+				         	       if($securityCenterNS.endswith("2")){
                                             
                                                          [int]$productState=$_.ProductState
                                          
-                                        		 $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
+                                                 	 $hexString=[System.Convert]::toString($productState,16).padleft(6,'0')
                                          
                                                          $provider=$hexString.substring(0,2)
                                          
