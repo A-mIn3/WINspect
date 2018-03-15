@@ -253,8 +253,11 @@ function get-LocalSecurityProducts
                
       }
                
-      
-  
+      $role = $(get-wmiObject -Class Win32_ComputerSystem).DomainRole
+
+      if($role -ne 0 -and $role -ne 1){
+               return
+      }
       
       if(Get-WmiObject -Namespace root -class __NAMESPACE -filter "name='SecurityCenter2'"){
 
