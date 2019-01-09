@@ -1046,7 +1046,7 @@ function get-ConfigurableServices{
      
        try{       
            
-                  Get-WmiObject -Class Win32_Service| ? { $_.pathname -notmatch ".*system32.*"}| % {
+                  Get-WmiObject -Class Win32_Service | % {
 
                              # get the security descriptor of the service in SDDL format
                   
@@ -1069,7 +1069,7 @@ function get-ConfigurableServices{
 		
                              if($permissions){
                   
-                                      if($permissions.value.split(';')[2] -match "CR|RP|WP|DT|DC|SD|WD|WO"){
+                                      if($permissions.value.split(';')[2] -match "WD"){
 
                                                  $configurable[$_.Name] = $($_.pathname.substring(0, $_.pathname.toLower().indexOf(".exe")+4)).trim('"')
  
